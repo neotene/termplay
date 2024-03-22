@@ -66,10 +66,17 @@ impl<'a> Layout {
     }
 
     pub fn update(&mut self, key: KeyEvent) {
+        if self.lines.len() == 0 {
+            return;
+        }
         for i in 0..self.lines.len() {
+            if self.lines[i].widget_holders.len() == 0 {
+                continue;
+            }
             for j in 0..self.lines[i].widget_holders.len() {
                 let mut save = self.lines[i].widget_holders.remove(j);
                 save.widget.update(save.is_focused, key, self);
+                self.lines[i].widget_holders.insert(j, save);
             }
         }
     }

@@ -12,14 +12,16 @@ pub struct UI {
 
 impl UI {
     pub fn new(layouts: Vec<Layout>) -> Self {
-        let idx = layouts.len() - 1;
+        let idx: i16;
+        if layouts.len() == 0 {
+            idx = 0;
+        } else {
+            idx = (layouts.len() as i16) - 1;
+        }
         let var = UI {
             layouts: layouts,
             current_layout_idx: idx as u16,
         };
-        // if var.layouts.len() > 0 {
-        //     var.layouts[0].lines[0].widget_holders[0].is_focused = true;
-        // }
         var
     }
 
