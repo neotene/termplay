@@ -5,8 +5,11 @@ use crate::utils::find_next_focusable_widget_holder;
 
 use super::layout::Layout;
 
+type Layouts = Vec<Layout>;
+pub type LayoutsRef<'a> = &'a mut Layouts;
+
 pub struct UI {
-    layouts: Vec<Layout>,
+    layouts: Layouts,
     current_layout_idx: u16,
 }
 
@@ -43,11 +46,11 @@ impl UI {
             _ => {}
         }
 
-        let current_layout = &mut self.layouts[self.current_layout_idx as usize];
+        let mut current_layout = self.layouts.remove(self.current_layout_idx as usize);
 
         if val != 0 && key.kind == KeyEventKind::Press {
             let idxs = find_next_focusable_widget_holder(
-                current_layout,
+                &current_layout,
                 current_layout.line_focused_idx,
                 current_layout.lines
                     [current_layout.line_focused_idx as usize].widget_holder_focused_idx,
@@ -66,6 +69,7 @@ impl UI {
             current_layout.lines[idxs.0 as usize].widget_holders[idxs.1 as usize].is_focused = true;
         }
 
-        current_layout.update(key);
+        current_layout.update(key, &mut self.layouts);
+        self.layouts.insert(self.current_layout_idx as usize, current_layout);
     }
 }

@@ -1,12 +1,13 @@
 use crossterm::event::{ KeyCode, KeyEvent, KeyEventKind };
 use ratatui::{ style::{ Color, Style }, widgets::{ Block, BorderType, Borders, Paragraph }, Frame };
 
-use super::{ layout::Layout, widget::Widget };
+use super::{ layout::Layout, ui::LayoutsRef, widget::Widget };
 
+pub type Callback = fn(&mut dyn Widget, &mut Layout, LayoutsRef);
 pub struct Button<'a> {
     paragraph: Paragraph<'a>,
     title: String,
-    action: fn(),
+    action: Callback,
 }
 
 pub fn get_default_paragraph<'a>(title: String) -> Paragraph<'a> {
@@ -23,7 +24,13 @@ impl<'a> Widget for Button<'a> {
         frame.render_widget(self.paragraph.clone(), area);
     }
 
-    fn update(&mut self, focused: bool, key: KeyEvent, _layouts: &mut Layout) -> bool {
+    fn update(
+        &mut self,
+        focused: bool,
+        key: KeyEvent,
+        layout: &mut Layout,
+        layouts: LayoutsRef
+    ) -> bool {
         if focused {
             self.paragraph = get_default_paragraph(self.title.clone()).block(
                 Block::new()
@@ -36,7 +43,7 @@ impl<'a> Widget for Button<'a> {
                 KeyCode::Enter => {
                     match key.kind {
                         KeyEventKind::Press => {
-                            (self.action)();
+                            (self.action)(self, layout, layouts);
                         }
                         _ => {}
                     }
@@ -60,7 +67,7 @@ impl<'a> Widget for Button<'a> {
 }
 
 impl<'a> Button<'a> {
-    pub fn new(title: String, action: fn()) -> Self {
+    pub fn new(title: String, action: Callback) -> Self {
         Button {
             paragraph: get_default_paragraph(title.clone()),
             title: title.clone(),

@@ -1,7 +1,7 @@
 use crossterm::event::KeyEvent;
 use ratatui::{ widgets::Paragraph, Frame };
 
-use super::{ layout::Layout, widget::Widget };
+use super::{ layout::Layout, ui::LayoutsRef, widget::Widget };
 
 #[derive(Default)]
 pub struct Label {
@@ -14,7 +14,13 @@ impl Widget for Label {
         frame.render_widget(Paragraph::new(self.text.clone()).style(self.style), area);
     }
 
-    fn update(&mut self, _focused: bool, _key: KeyEvent, _layouts: &mut Layout) -> bool {
+    fn update(
+        &mut self,
+        _focused: bool,
+        _key: KeyEvent,
+        layout: &mut Layout,
+        _layouts: LayoutsRef
+    ) -> bool {
         // Do nothing
         false
     }

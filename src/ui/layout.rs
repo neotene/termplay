@@ -3,7 +3,7 @@ use ratatui::{ layout::{ Constraint, Rect }, widgets::Borders, Frame };
 
 use crate::utils::enlarge_rect;
 
-use super::line::Line;
+use super::{ line::Line, ui::LayoutsRef };
 
 pub struct Layout {
     pub lines: Vec<Line>,
@@ -65,7 +65,7 @@ impl<'a> Layout {
             });
     }
 
-    pub fn update(&mut self, key: KeyEvent) {
+    pub fn update(&mut self, key: KeyEvent, layouts: LayoutsRef) {
         if self.lines.len() == 0 {
             return;
         }
@@ -75,7 +75,7 @@ impl<'a> Layout {
             }
             for j in 0..self.lines[i].widget_holders.len() {
                 let mut save = self.lines[i].widget_holders.remove(j);
-                save.widget.update(save.is_focused, key, self);
+                save.widget.update(save.is_focused, key, self, layouts);
                 self.lines[i].widget_holders.insert(j, save);
             }
         }

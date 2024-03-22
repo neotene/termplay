@@ -32,7 +32,7 @@ fn main() -> Result<()> {
         true
     );
 
-    let login_button = Button::new(String::from("Login"), || {});
+    let login_button = Button::new(String::from("Login"), |self_widget, layout, layouts| {});
 
     // register modale
     let register_email_field = Field::new(
@@ -59,9 +59,12 @@ fn main() -> Result<()> {
         true
     );
 
-    let register_back_button = Button::new(String::from("Back"), || {});
+    let register_back_button = Button::new(String::from("Back"), |self_widget, layout, layouts| {});
 
-    let register_register_button = Button::new(String::from("Register"), || {});
+    let register_register_button = Button::new(
+        String::from("Register"),
+        |self_widget, layout, layouts| {}
+    );
 
     let _register_layout = Layout::new(
         vec![
@@ -100,12 +103,7 @@ fn main() -> Result<()> {
     );
     // end register modale
 
-    let register_button = Button::new(
-        String::from("Register"),
-        || {
-            // ui.push_layout(register_layout);
-        }
-    );
+    let register_button = Button::new(String::from("Register"), |self_widget, layout, layouts| {});
 
     let fake_label = Label::default();
 
