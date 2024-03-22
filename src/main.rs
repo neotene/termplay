@@ -5,7 +5,7 @@ use crossterm::{
 };
 use ratatui::{ layout::Constraint, prelude::{ CrosstermBackend, Terminal } };
 use utils::centered_rect;
-use std::{ io::{ stdout, Result }, rc::Rc };
+use std::io::{ stdout, Result };
 
 mod ui;
 mod utils;
@@ -109,41 +109,39 @@ fn main() -> Result<()> {
 
     let fake_label = Label::default();
 
-    let mut ui = Rc::new(
-        UI::new(
-            vec![
-                Layout::new(
-                    vec![
-                        Line::new(
-                            vec![WidgetHolder::new(Box::new(login_email_field))],
-                            vec![Constraint::Percentage(100)]
-                        ),
-                        Line::new(
-                            vec![WidgetHolder::new(Box::new(login_password_field))],
-                            vec![Constraint::Percentage(100)]
-                        ),
-                        Line::new(
-                            vec![WidgetHolder::new(Box::new(fake_label))],
-                            vec![Constraint::Percentage(100)]
-                        ),
-                        Line::new(
-                            vec![
-                                WidgetHolder::new(Box::new(login_button)),
-                                WidgetHolder::new(Box::new(register_button))
-                            ],
-                            vec![Constraint::Percentage(50), Constraint::Percentage(50)]
-                        )
-                    ],
-                    vec![
-                        Constraint::Min(3),
-                        Constraint::Min(3),
-                        Constraint::Percentage(100),
-                        Constraint::Min(3)
-                    ],
-                    centered_rect(terminal.size()?, 50, 25)
-                )
-            ]
-        )
+    let mut ui = UI::new(
+        vec![
+            Layout::new(
+                vec![
+                    Line::new(
+                        vec![WidgetHolder::new(Box::new(login_email_field))],
+                        vec![Constraint::Percentage(100)]
+                    ),
+                    Line::new(
+                        vec![WidgetHolder::new(Box::new(login_password_field))],
+                        vec![Constraint::Percentage(100)]
+                    ),
+                    Line::new(
+                        vec![WidgetHolder::new(Box::new(fake_label))],
+                        vec![Constraint::Percentage(100)]
+                    ),
+                    Line::new(
+                        vec![
+                            WidgetHolder::new(Box::new(login_button)),
+                            WidgetHolder::new(Box::new(register_button))
+                        ],
+                        vec![Constraint::Percentage(50), Constraint::Percentage(50)]
+                    )
+                ],
+                vec![
+                    Constraint::Min(3),
+                    Constraint::Min(3),
+                    Constraint::Percentage(100),
+                    Constraint::Min(3)
+                ],
+                centered_rect(terminal.size()?, 50, 25)
+            )
+        ]
     );
     loop {
         let mut key_event = KeyEvent::from(KeyCode::Null);

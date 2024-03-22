@@ -1,9 +1,7 @@
-use std::{ cell::RefCell, rc::Rc };
-
 use crossterm::event::KeyEvent;
-use ratatui::{ style::Style, widgets::Paragraph, Frame };
+use ratatui::{ widgets::Paragraph, Frame };
 
-use super::{ layout::Layout, ui::UI, widget::Widget };
+use super::{ layout::Layout, widget::Widget };
 
 #[derive(Default)]
 pub struct Label {
@@ -16,7 +14,7 @@ impl Widget for Label {
         frame.render_widget(Paragraph::new(self.text.clone()).style(self.style), area);
     }
 
-    fn update(&mut self, _focused: bool, _key: KeyEvent, _layouts: RefCell<Vec<Layout>>) -> bool {
+    fn update(&mut self, _focused: bool, _key: KeyEvent, _layouts: &mut Layout) -> bool {
         // Do nothing
         false
     }

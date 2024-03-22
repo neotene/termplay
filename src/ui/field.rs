@@ -1,10 +1,8 @@
-use std::{ cell::RefCell, rc::Rc };
-
 use crossterm::event::{ KeyCode, KeyEvent };
 use ratatui::{ style::{ Color, Style, Stylize }, widgets::{ Block, BorderType, Borders }, Frame };
 use tui_textarea::TextArea;
 
-use super::{ layout::Layout, ui::UI, widget::Widget };
+use super::{ layout::Layout, widget::Widget };
 
 pub struct Field<'a> {
     textarea: TextArea<'a>,
@@ -15,7 +13,7 @@ impl Widget for Field<'_> {
         frame.render_widget(self.textarea.widget(), area);
     }
 
-    fn update(&mut self, focused: bool, key: KeyEvent, layouts: RefCell<Vec<Layout>>) -> bool {
+    fn update(&mut self, focused: bool, key: KeyEvent, _layouts: &mut Layout) -> bool {
         if focused {
             self.textarea.set_block(
                 Block::new()

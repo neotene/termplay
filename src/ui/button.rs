@@ -1,9 +1,7 @@
-use std::{ cell::RefCell, rc::Rc };
-
 use crossterm::event::{ KeyCode, KeyEvent, KeyEventKind };
 use ratatui::{ style::{ Color, Style }, widgets::{ Block, BorderType, Borders, Paragraph }, Frame };
 
-use super::{ layout::Layout, ui::UI, widget::Widget };
+use super::{ layout::Layout, widget::Widget };
 
 pub struct Button<'a> {
     paragraph: Paragraph<'a>,
@@ -25,7 +23,7 @@ impl<'a> Widget for Button<'a> {
         frame.render_widget(self.paragraph.clone(), area);
     }
 
-    fn update(&mut self, focused: bool, key: KeyEvent, layouts: RefCell<Vec<Layout>>) -> bool {
+    fn update(&mut self, focused: bool, key: KeyEvent, _layouts: &mut Layout) -> bool {
         if focused {
             self.paragraph = get_default_paragraph(self.title.clone()).block(
                 Block::new()

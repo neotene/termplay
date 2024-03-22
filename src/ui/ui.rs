@@ -1,5 +1,3 @@
-use std::{ borrow::{ Borrow, BorrowMut }, cell::{ Cell, OnceCell, RefCell }, rc::Rc };
-
 use crossterm::event::{ KeyCode, KeyEvent, KeyEventKind };
 use ratatui::Frame;
 
@@ -8,15 +6,15 @@ use crate::utils::find_next_focusable_widget_holder;
 use super::layout::Layout;
 
 pub struct UI {
-    layouts: RefCell<Vec<Layout>>,
+    layouts: Vec<Layout>,
     current_layout_idx: u16,
 }
 
 impl UI {
     pub fn new(layouts: Vec<Layout>) -> Self {
         let idx = layouts.len() - 1;
-        let mut var = UI {
-            layouts: RefCell::new(layouts),
+        let var = UI {
+            layouts: layouts,
             current_layout_idx: idx as u16,
         };
         // if var.layouts.len() > 0 {
@@ -26,12 +24,9 @@ impl UI {
     }
 
     pub fn draw(&self, frame: &mut Frame) {
-        self.layouts
-            .borrow()
-            .iter()
-            .for_each(|layer| {
-                layer.draw(frame);
-            });
+        self.layouts.iter().for_each(|layer| {
+            layer.draw(frame);
+        });
     }
 
     pub fn update(&mut self, key: KeyEvent) {
@@ -46,7 +41,7 @@ impl UI {
             _ => {}
         }
 
-        let current_layout = &mut self.layouts.borrow()[self.current_layout_idx as usize];
+        let current_layout = &mut self.layouts[self.current_layout_idx as usize];
 
         if val != 0 && key.kind == KeyEventKind::Press {
             let idxs = find_next_focusable_widget_holder(
@@ -69,6 +64,6 @@ impl UI {
             current_layout.lines[idxs.0 as usize].widget_holders[idxs.1 as usize].is_focused = true;
         }
 
-        current_layout.update(key, self.layouts);
+        current_layout.update(key);
     }
 }

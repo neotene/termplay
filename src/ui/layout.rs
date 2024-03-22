@@ -1,11 +1,9 @@
-use std::{ cell::RefCell, rc::Rc };
-
 use crossterm::event::KeyEvent;
 use ratatui::{ layout::{ Constraint, Rect }, widgets::Borders, Frame };
 
 use crate::utils::enlarge_rect;
 
-use super::{ line::Line, ui::UI };
+use super::line::Line;
 
 pub struct Layout {
     pub lines: Vec<Line>,
@@ -67,23 +65,12 @@ impl<'a> Layout {
             });
     }
 
-    pub fn update(&mut self, key: KeyEvent, layouts: RefCell<Vec<Layout>>) {
-        let mut is_new_layout = false;
-        for line in self.lines.iter_mut(). {
-            for widget_holder in line.widget_holders.iter_mut() {
-                self.pop_widget(i, j);
-                widget_holder.widget.update(widget_holder.is_focused, key, layouts);
+    pub fn update(&mut self, key: KeyEvent) {
+        for i in 0..self.lines.len() {
+            for j in 0..self.lines[i].widget_holders.len() {
+                let mut save = self.lines[i].widget_holders.remove(j);
+                save.widget.update(save.is_focused, key, self);
             }
         }
-        is_new_layout
-    }
-
-    pub fn pop_widget(&mut self, line_index: usize, widget_index: usize) -> Option<WidgetType> {
-        if let Some(line) = self.lines.get_mut(line_index) {
-            if let Some(widget_holder) = line.widget_holders.remove(widget_index) {
-                return Some(widget_holder.widget);
-            }
-        }
-        None
     }
 }
