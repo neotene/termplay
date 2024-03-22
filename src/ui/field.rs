@@ -18,7 +18,7 @@ impl Widget for Field<'_> {
         &mut self,
         focused: bool,
         key: KeyEvent,
-        layout: &mut Layout,
+        _layout: &mut Layout,
         _layouts: LayoutsRef
     ) -> bool {
         if focused {
@@ -55,6 +55,13 @@ impl Widget for Field<'_> {
     fn is_focusable(&self) -> bool {
         true
     }
+
+    // fn clone(&self) -> Box<dyn Widget> {
+    //     Box::new(Field {
+    //         textarea: self.textarea.clone(),
+    //         title: self.title.clone(),
+    //     })
+    // }
 }
 
 impl<'a> Field<'a> {

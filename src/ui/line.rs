@@ -1,7 +1,7 @@
 use ratatui::layout::Constraint;
 
 use super::widget_holder::WidgetHolder;
-
+// #[derive(Clone)]
 pub struct Line {
     pub widget_holders: Vec<WidgetHolder>,
     pub constraints: Vec<Constraint>,

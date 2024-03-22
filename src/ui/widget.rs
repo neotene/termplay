@@ -13,4 +13,5 @@ pub trait Widget {
         layouts: LayoutsRef
     ) -> bool;
     fn is_focusable(&self) -> bool;
+    // fn clone(&self) -> Box<dyn Widget>;
 }

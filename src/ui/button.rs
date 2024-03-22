@@ -1,9 +1,14 @@
 use crossterm::event::{ KeyCode, KeyEvent, KeyEventKind };
-use ratatui::{ style::{ Color, Style }, widgets::{ Block, BorderType, Borders, Paragraph }, Frame };
+use ratatui::{
+    layout::Alignment,
+    style::{ Color, Style },
+    widgets::{ Block, BorderType, Borders, Paragraph },
+    Frame,
+};
 
 use super::{ layout::Layout, ui::LayoutsRef, widget::Widget };
 
-pub type Callback = fn(&mut dyn Widget, &mut Layout, LayoutsRef);
+pub type Callback = Box<dyn Fn(&mut Layout, LayoutsRef) -> Result<bool, std::io::Error>>;
 pub struct Button<'a> {
     paragraph: Paragraph<'a>,
     title: String,
@@ -43,7 +48,7 @@ impl<'a> Widget for Button<'a> {
                 KeyCode::Enter => {
                     match key.kind {
                         KeyEventKind::Press => {
-                            (self.action)(self, layout, layouts);
+                            let _ = (self.action)(layout, layouts);
                         }
                         _ => {}
                     }
@@ -64,12 +69,20 @@ impl<'a> Widget for Button<'a> {
     fn is_focusable(&self) -> bool {
         true
     }
+
+    // fn clone(&self) -> Box<dyn Widget> {
+    //     Box::new(Button {
+    //         paragraph: self.paragraph.clone(),
+    //         title: self.title.clone(),
+    //         action: self.action,
+    //     })
+    // }
 }
 
 impl<'a> Button<'a> {
     pub fn new(title: String, action: Callback) -> Self {
         Button {
-            paragraph: get_default_paragraph(title.clone()),
+            paragraph: get_default_paragraph(title.clone()).alignment(Alignment::Center),
             title: title.clone(),
             action: action,
         }

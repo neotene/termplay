@@ -18,7 +18,7 @@ impl Widget for Label {
         &mut self,
         _focused: bool,
         _key: KeyEvent,
-        layout: &mut Layout,
+        _layout: &mut Layout,
         _layouts: LayoutsRef
     ) -> bool {
         // Do nothing
@@ -28,6 +28,13 @@ impl Widget for Label {
     fn is_focusable(&self) -> bool {
         false
     }
+
+    // fn clone(&self) -> Box<dyn Widget> {
+    //     Box::new(Label {
+    //         text: self.text.clone(),
+    //         style: self.style,
+    //     })
+    // }
 }
 
 // impl Default for Label {

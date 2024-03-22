@@ -5,6 +5,7 @@ use crate::utils::enlarge_rect;
 
 use super::{ line::Line, ui::LayoutsRef };
 
+// #[derive(Clone)]
 pub struct Layout {
     pub lines: Vec<Line>,
     constraints: Vec<Constraint>,
