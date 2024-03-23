@@ -16,12 +16,14 @@ pub struct Button<'a> {
 }
 
 pub fn get_default_paragraph<'a>(title: String) -> Paragraph<'a> {
-    Paragraph::new(title).block(
-        Block::new()
-            .border_type(BorderType::Rounded)
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(Color::Gray))
-    )
+    Paragraph::new(title)
+        .block(
+            Block::new()
+                .border_type(BorderType::Rounded)
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::Gray))
+        )
+        .alignment(Alignment::Center)
 }
 
 impl<'a> Widget for Button<'a> {

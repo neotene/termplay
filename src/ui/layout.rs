@@ -1,5 +1,5 @@
 use crossterm::event::KeyEvent;
-use ratatui::{ layout::{ Constraint, Rect }, widgets::Borders, Frame };
+use ratatui::{ layout::{ Constraint, Rect }, widgets::{ Borders, Clear, Widget }, Frame };
 
 use crate::utils::enlarge_rect;
 
@@ -19,15 +19,22 @@ impl<'a> Layout {
         constraints: Vec<Constraint>,
         area: ratatui::layout::Rect
     ) -> Self {
-        Layout {
+        let mut var = Layout {
             lines,
             constraints,
             area,
             line_focused_idx: 0,
+        };
+        if var.lines.len() > 0 {
+            if var.lines[0].widget_holders.len() > 0 {
+                var.lines[0].widget_holders[0].is_focused = true;
+            }
         }
+        var
     }
 
     pub fn draw(&self, frame: &mut Frame) {
+        Clear.render(self.area, frame.buffer_mut());
         frame.render_widget(
             ratatui::widgets::Block
                 ::default()

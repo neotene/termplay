@@ -1,7 +1,6 @@
 use std::io::stdout;
 
 use crossterm::{
-    event::{ self, KeyCode, KeyEvent, KeyEventKind },
     terminal::{ disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen },
     ExecutableCommand,
 };
@@ -36,7 +35,7 @@ fn main() -> Result<(), std::io::Error> {
 
     let login_button = Button::new(
         String::from("Login"),
-        Box::new(|_layout, _layoutss| Ok(true))
+        Box::new(|_layout, _layouts| Ok(true))
     );
 
     let register_button = Button::new(
@@ -155,23 +154,10 @@ fn main() -> Result<(), std::io::Error> {
             )
         ]
     );
-    loop {
-        let mut key_event = KeyEvent::from(KeyCode::Null);
-        if event::poll(std::time::Duration::from_millis(16))? {
-            let event = event::read()?;
-            match event {
-                event::Event::Key(key) => {
-                    if key.kind == KeyEventKind::Press && key.code == KeyCode::Esc {
-                        break;
-                    }
-                    key_event = key;
-                }
-                _ => (),
-            }
-        }
 
-        if key_event.code != KeyCode::Null {
-            ui.update(key_event);
+    loop {
+        if !ui.update() {
+            break;
         }
 
         terminal.draw(|frame| {

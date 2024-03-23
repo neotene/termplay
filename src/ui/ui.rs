@@ -1,4 +1,4 @@
-use crossterm::event::{ KeyCode, KeyEvent, KeyEventKind };
+use crossterm::event::{ self, KeyCode, KeyEvent, KeyEventKind };
 use ratatui::Frame;
 
 use crate::utils::find_next_focusable_widget_holder;
@@ -11,6 +11,8 @@ pub type LayoutsRef<'a> = &'a mut Layouts;
 pub struct UI {
     layouts: Layouts,
     current_layout_idx: u16,
+    tick_duration: std::time::Duration,
+    last_tick: std::time::Instant,
 }
 
 impl UI {
@@ -21,11 +23,12 @@ impl UI {
         } else {
             idx = (layouts.len() as i16) - 1;
         }
-        let var = UI {
+        UI {
             layouts: layouts,
             current_layout_idx: idx as u16,
-        };
-        var
+            tick_duration: std::time::Duration::from_millis(100),
+            last_tick: std::time::Instant::now(),
+        }
     }
 
     pub fn draw(&self, frame: &mut Frame) {
@@ -34,7 +37,34 @@ impl UI {
         });
     }
 
-    pub fn update(&mut self, key: KeyEvent) {
+    pub fn update(&mut self) -> bool {
+        self.current_layout_idx = (self.layouts.len() as u16) - 1;
+
+        let mut key = KeyEvent::from(KeyCode::Null);
+        if let Ok(true) = event::poll(std::time::Duration::from_millis(16)) {
+            if let Ok(event) = event::read() {
+                match event {
+                    event::Event::Key(key_event) => {
+                        key = key_event.clone();
+                        if
+                            key_event.kind == KeyEventKind::Press &&
+                            key_event.modifiers == event::KeyModifiers::CONTROL &&
+                            key_event.code == KeyCode::Char('c')
+                        {
+                            return false;
+                        }
+                    }
+                    _ => (),
+                }
+            }
+        }
+
+        let now = std::time::Instant::now();
+        // if now.duration_since(self.last_tick) < self.tick_duration {
+        //     return true;
+        // }
+        self.last_tick = now;
+
         let mut val: i16 = 0;
         match key.code {
             KeyCode::Tab => {
@@ -71,5 +101,6 @@ impl UI {
 
         current_layout.update(key, &mut self.layouts);
         self.layouts.insert(self.current_layout_idx as usize, current_layout);
+        true
     }
 }
