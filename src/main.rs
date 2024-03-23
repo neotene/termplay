@@ -14,7 +14,11 @@ use ui::{ field::Field, layout::Layout, line::Line, ui::UI, widget_holder::Widge
 use ui::button::Button;
 use ui::label::Label;
 
-fn main() -> Result<(), std::io::Error> {
+use tokio::net::TcpListener;
+use tokio::io::{ AsyncReadExt, AsyncWriteExt };
+
+#[tokio::main]
+async fn main() -> Result<(), std::io::Error> {
     stdout().execute(EnterAlternateScreen)?;
     enable_raw_mode()?;
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
@@ -69,7 +73,10 @@ fn main() -> Result<(), std::io::Error> {
 
                 let register_back_button = Button::new(
                     String::from("Back"),
-                    Box::new(|_layout, _layoutss| Ok(true))
+                    Box::new(|_layout, layouts| {
+                        layouts.pop();
+                        Ok(true)
+                    })
                 );
 
                 let register_register_button = Button::new(

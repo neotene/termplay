@@ -10,3 +10,4 @@ crossterm = "0.27.0"
 email_address = "0.2.4"
 ratatui = "0.26.1"
 tui-textarea = "0.4.0"
+tokio = { version = "1.36.0", features = ["full"] }
