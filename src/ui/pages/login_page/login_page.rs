@@ -1,5 +1,6 @@
+use crossterm::event::KeyEventKind;
 use ratatui::backend::Backend;
-use ratatui::layout::{ self, Constraint, Direction, Layout };
+use ratatui::layout::{ self, Alignment, Constraint, Direction, Layout };
 use ratatui::style::{ Color, Style };
 use ratatui::widgets::{ Block, Borders };
 use ratatui::Frame;
@@ -77,6 +78,14 @@ impl LoginPage {
             _ => Color::Reset,
         }
     }
+
+    fn calculate_show_cursor(&self, focus: Focus) -> bool {
+        match (self.active_section.as_ref(), &self.last_hovered_section) {
+            (Some(active_section), _) if active_section.eq(&focus) => false,
+            (_, last_hovered_section) if last_hovered_section.eq(&focus) => true,
+            _ => false,
+        }
+    }
 }
 
 impl UIObject for LoginPage {
@@ -86,7 +95,7 @@ impl UIObject for LoginPage {
             password_field: TextInput::new(state, action_sender.clone()),
             login_button: Button::new(state, action_sender.clone()),
             register_button: Button::new(state, action_sender.clone()),
-            last_hovered_section: Focus::LoginField,
+            last_hovered_section: DEFAULT_HOVERED_SECTION,
             active_section: None,
         }
     }
@@ -94,6 +103,9 @@ impl UIObject for LoginPage {
     fn handle_key_event(&mut self, event: crossterm::event::Event) {
         match event {
             crossterm::event::Event::Key(key) => {
+                if key.kind != KeyEventKind::Press {
+                    return;
+                }
                 match key.code {
                     crossterm::event::KeyCode::Tab => {
                         self.hover_next();
@@ -133,21 +145,31 @@ impl UIObject for LoginPage {
 
 impl UiRender<()> for LoginPage {
     fn render<B: Backend>(&self, frame: &mut Frame<B>, _properties: ()) {
+        let page_block = Block::default()
+            .title("Termplay")
+            .title_alignment(Alignment::Center)
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::White))
+            .style(Style::default().bg(Color::Black));
+
+        // RENDER PAGE BLOCK
+        frame.render_widget(page_block, frame.size());
+
         let areas_vert_3 = Layout::default()
             .direction(layout::Direction::Vertical)
             .constraints([
-                Constraint::Ratio(1, 3),
-                Constraint::Ratio(1, 3),
-                Constraint::Ratio(1, 3),
+                Constraint::Percentage(35),
+                Constraint::Percentage(30),
+                Constraint::Percentage(35),
             ])
             .split(frame.size());
 
         let areas_center_3 = Layout::default()
             .direction(layout::Direction::Horizontal)
             .constraints([
-                Constraint::Ratio(1, 3),
-                Constraint::Ratio(1, 3),
-                Constraint::Ratio(1, 3),
+                Constraint::Percentage(25),
+                Constraint::Percentage(50),
+                Constraint::Percentage(25),
             ])
             .split(areas_vert_3[1]);
 
@@ -155,6 +177,7 @@ impl UiRender<()> for LoginPage {
 
         let modal_block = Block::default()
             .title("Welcome to Termplay!")
+            .title_alignment(Alignment::Center)
             .borders(Borders::ALL)
             .border_style(Style::default().fg(Color::White))
             .style(Style::default().bg(Color::Black));
@@ -162,56 +185,62 @@ impl UiRender<()> for LoginPage {
         // RENDER MODAL BLOCK
         frame.render_widget(modal_block, modal_area);
 
-        modal_area.x += 2;
+        modal_area.x += 4;
         modal_area.y += 2;
-        modal_area.width -= 4;
+        modal_area.width -= 8;
         modal_area.height -= 4;
 
         let modal_areas_vert_4 = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Ratio(1, 4),
-                Constraint::Ratio(1, 4),
-                Constraint::Ratio(1, 4),
-                Constraint::Ratio(1, 4),
+                Constraint::Min(3),
+                Constraint::Min(3),
+                Constraint::Percentage(100),
+                Constraint::Min(3),
             ])
             .split(modal_area);
 
         let mut login_field_area = modal_areas_vert_4[0];
         login_field_area.height = 3;
+        // RENDER LOGIN FIELD
         self.login_field.render(frame, text_input::RenderProperties {
             title: String::from("Login"),
             area: login_field_area,
-            border_color: ratatui::style::Color::White,
+            border_color: self.calculate_border_color(Focus::LoginField),
+            show_cursor: self.calculate_show_cursor(Focus::LoginField),
         });
 
         let mut password_field_area = modal_areas_vert_4[1];
         password_field_area.height = 3;
+        // RENDER PASSWORD FIELD
         self.password_field.render(frame, text_input::RenderProperties {
             title: String::from("Password"),
             area: password_field_area,
-            border_color: ratatui::style::Color::White,
+            border_color: self.calculate_border_color(Focus::PasswordField),
+            show_cursor: self.calculate_show_cursor(Focus::PasswordField),
         });
 
         let buttons_area = modal_areas_vert_4[3];
-        let modal_buttons_areas_horiz_2 = Layout::default()
+        let modal_buttons_areas_horiz_3 = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)])
+            .constraints([Constraint::Min(15), Constraint::Percentage(100), Constraint::Min(15)])
             .split(buttons_area);
 
-        let mut login_button_area = modal_buttons_areas_horiz_2[0];
+        let mut login_button_area = modal_buttons_areas_horiz_3[0];
         login_button_area.height = 3;
+        // RENDER LOGIN BUTTON
         self.login_button.render(frame, button::RenderProperties {
             label: String::from("Login"),
-            hovered: self.last_hovered_section.eq(&Focus::LoginButton),
+            border_color: self.calculate_border_color(Focus::LoginButton),
             area: login_button_area,
         });
 
-        let mut register_button_area = modal_buttons_areas_horiz_2[1];
+        let mut register_button_area = modal_buttons_areas_horiz_3[2];
         register_button_area.height = 3;
+        // RENDER REGISTER BUTTON
         self.register_button.render(frame, button::RenderProperties {
             label: String::from("Register"),
-            hovered: self.last_hovered_section.eq(&Focus::RegisterButton),
+            border_color: self.calculate_border_color(Focus::RegisterButton),
             area: register_button_area,
         });
     }

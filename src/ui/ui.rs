@@ -2,7 +2,7 @@ use std::io::{ self, Stdout };
 
 use anyhow::Context;
 use crossterm::{
-    event::{ DisableMouseCapture, EnableMouseCapture, EventStream },
+    event::{ DisableMouseCapture, EnableMouseCapture, Event, EventStream },
     execute,
     terminal::{ disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen },
 };
@@ -39,9 +39,9 @@ impl UI {
 
         let _result: anyhow::Result<Interrupted> = loop {
             tokio::select! {
-               Some(maybe_event) = crossterm_events.next() => {
+                Some(maybe_event) = crossterm_events.next() => {
                     application.handle_key_event(maybe_event.unwrap());
-               },
+                },
                 // Handle state updates
                 Some(_state) = _state_receiver.recv() => {
                     // app_router = app_router.move_with_state(&state);

@@ -2,7 +2,7 @@ use ratatui::{
     backend::Backend,
     layout::Rect,
     style::{ Color, Style },
-    widgets::{ Block, Borders },
+    widgets::{ Block, Borders, Paragraph },
     Frame,
 };
 use tokio::sync::mpsc::UnboundedSender;
@@ -28,9 +28,6 @@ impl UIObject for TextInput {
         match event {
             crossterm::event::Event::Key(key) => {
                 match key.code {
-                    crossterm::event::KeyCode::Char(to_insert) => {
-                        self.enter_char(to_insert);
-                    }
                     crossterm::event::KeyCode::Backspace => {
                         self.delete_char();
                     }
@@ -39,6 +36,9 @@ impl UIObject for TextInput {
                     }
                     crossterm::event::KeyCode::Right => {
                         self.move_cursor_right();
+                    }
+                    crossterm::event::KeyCode::Char(to_insert) => {
+                        self.enter_char(to_insert);
                     }
                     _ => {}
                 }
@@ -49,28 +49,46 @@ impl UIObject for TextInput {
 }
 
 impl TextInput {
-    fn enter_char(&self, to_insert: char) {
-        let mut new_text = self.text.clone();
-        new_text.insert(self.cursor_position, to_insert);
-    }
-
-    fn delete_char(&self) {
-        if self.cursor_position > 0 {
-            let mut new_text = self.text.clone();
-            new_text.remove(self.cursor_position - 1);
-        }
-    }
-
     fn move_cursor_left(&mut self) {
-        if self.cursor_position > 0 {
-            self.cursor_position -= 1;
-        }
+        let cursor_moved_left = self.cursor_position.saturating_sub(1);
+        self.cursor_position = self.clamp_cursor(cursor_moved_left);
     }
 
     fn move_cursor_right(&mut self) {
-        if self.cursor_position < self.text.len() {
-            self.cursor_position += 1;
+        let cursor_moved_right = self.cursor_position.saturating_add(1);
+        self.cursor_position = self.clamp_cursor(cursor_moved_right);
+    }
+
+    fn enter_char(&mut self, new_char: char) {
+        self.text.insert(self.cursor_position, new_char);
+
+        self.move_cursor_right();
+    }
+
+    fn delete_char(&mut self) {
+        let is_not_cursor_leftmost = self.cursor_position != 0;
+        if is_not_cursor_leftmost {
+            // Method "remove" is not used on the saved text for deleting the selected char.
+            // Reason: Using remove on String works on bytes instead of the chars.
+            // Using remove would require special care because of char boundaries.
+
+            let current_index = self.cursor_position;
+            let from_left_to_current_index = current_index - 1;
+
+            // Getting all characters before the selected character.
+            let before_char_to_delete = self.text.chars().take(from_left_to_current_index);
+            // Getting all characters after selected character.
+            let after_char_to_delete = self.text.chars().skip(current_index);
+
+            // Put all characters together except the selected one.
+            // By leaving the selected one out, it is forgotten and therefore deleted.
+            self.text = before_char_to_delete.chain(after_char_to_delete).collect();
+            self.move_cursor_left();
         }
+    }
+
+    fn clamp_cursor(&self, new_cursor_pos: usize) -> usize {
+        new_cursor_pos.clamp(0, self.text.len())
     }
 }
 
@@ -78,14 +96,32 @@ pub struct RenderProperties {
     pub title: String,
     pub area: Rect,
     pub border_color: Color,
+    pub show_cursor: bool,
 }
 
 impl UiRender<RenderProperties> for TextInput {
     fn render<B: Backend>(&self, frame: &mut Frame<B>, properties: RenderProperties) {
-        let block = Block::default()
-            .title(properties.title)
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(properties.border_color));
-        frame.render_widget(block, properties.area);
+        let paragraph = Paragraph::new(self.text.clone())
+            .style(Style::default().fg(Color::White))
+            .block(
+                Block::default()
+                    .title(properties.title)
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(properties.border_color))
+            );
+
+        frame.render_widget(paragraph, properties.area);
+
+        if properties.show_cursor {
+            // Make the cursor visible and ask ratatui to put it at the specified coordinates after
+            // rendering
+            frame.set_cursor(
+                // Draw the cursor at the current position in the input field.
+                // This position is can be controlled via the left and right arrow key
+                properties.area.x + (self.cursor_position as u16) + 1,
+                // Move one line down, from the border to the input line
+                properties.area.y + 1
+            )
+        }
     }
 }

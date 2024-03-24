@@ -1,4 +1,10 @@
-use ratatui::{ backend::Backend, layout::Rect, style::{ Color, Style }, widgets::Paragraph, Frame };
+use ratatui::{
+    backend::Backend,
+    layout::{ Alignment, Rect },
+    style::{ Color, Style },
+    widgets::{ Block, Borders, Paragraph },
+    Frame,
+};
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
@@ -34,18 +40,17 @@ impl UIObject for Button {
 
 pub struct RenderProperties {
     pub label: String,
-    pub hovered: bool,
+    pub border_color: Color,
     pub area: Rect,
 }
 
 impl UiRender<RenderProperties> for Button {
     fn render<B: Backend>(&self, frame: &mut Frame<B>, properties: RenderProperties) {
-        let style = if properties.hovered {
-            Style::default().fg(Color::Yellow)
-        } else {
-            Style::default()
-        };
-
-        frame.render_widget(Paragraph::new(properties.label.clone()).style(style), properties.area);
+        let style = Style::default().fg(properties.border_color);
+        let paragraph = Paragraph::new(properties.label.clone())
+            .style(style)
+            .block(Block::default().borders(Borders::ALL))
+            .alignment(Alignment::Center);
+        frame.render_widget(paragraph, properties.area);
     }
 }
