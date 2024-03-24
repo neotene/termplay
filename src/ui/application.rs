@@ -4,7 +4,7 @@ use crate::store::{ action::Action, state::State };
 
 use super::{ pages::login_page::login_page::LoginPage, ui_object::ui_object::UiObject };
 
-struct Application {
+pub struct Application {
     login_page: LoginPage,
 }
 

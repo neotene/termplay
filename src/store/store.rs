@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use tokio::sync::{ broadcast, mpsc };
 
 use state::State;
@@ -19,10 +21,31 @@ impl Store {
 
     pub async fn do_loop(
         &self,
-        _terminator: Terminator,
-        _action_receiver: mpsc::UnboundedReceiver<Action>,
-        _interrupt_receiver: broadcast::Receiver<Interrupted>
+        terminator: Terminator,
+        action_receiver: mpsc::UnboundedReceiver<Action>,
+        interrupt_receiver: broadcast::Receiver<Interrupted>
     ) -> anyhow::Result<Interrupted> {
+        let mut state = State::default();
+
+        self.state_sender.send(state.clone())?;
+
+        let mut ticker = tokio::time::interval(Duration::from_secs(1));
+
+        loop {
+            tokio::select! {
+                    Some(action) = action_receiver.recv() => match action {
+                        Action::Login => {
+                            print!("Logging in...");
+                        },
+                        Action::Register => {
+                            println!("Registering...");
+                        },
+                        Action::Exit => {
+                            break;
+                        },
+                    }
+                }
+        }
         Ok(Interrupted::UserInt)
     }
 }
