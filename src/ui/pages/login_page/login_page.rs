@@ -21,7 +21,7 @@ pub enum Focus {
 }
 
 impl Focus {
-    pub const COUNT: usize = 2;
+    pub const COUNT: usize = 4;
 
     fn to_usize(&self) -> usize {
         match self {
@@ -113,29 +113,25 @@ impl UIObject for LoginPage {
                     crossterm::event::KeyCode::BackTab => {
                         self.hover_previous();
                     }
-                    crossterm::event::KeyCode::Enter => {
-                        match self.last_hovered_section {
-                            Focus::LoginButton => {
-                                self.login_button.handle_key_event(event);
-                            }
-                            Focus::RegisterButton => {
-                                self.register_button.handle_key_event(event);
-                            }
-                            _ => {}
-                        }
-                    }
-                    crossterm::event::KeyCode::Char(_c) => {
-                        match self.last_hovered_section {
+                    _ => {
+                        let active_section = self.active_section
+                            .as_ref()
+                            .unwrap_or(&self.last_hovered_section);
+                        match active_section {
                             Focus::LoginField => {
                                 self.login_field.handle_key_event(event);
                             }
                             Focus::PasswordField => {
                                 self.password_field.handle_key_event(event);
                             }
-                            _ => {}
+                            Focus::LoginButton => {
+                                self.login_button.handle_key_event(event);
+                            }
+                            Focus::RegisterButton => {
+                                self.register_button.handle_key_event(event);
+                            }
                         }
                     }
-                    _ => {}
                 }
             }
             _ => {}

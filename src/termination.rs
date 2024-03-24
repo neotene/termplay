@@ -10,16 +10,16 @@ pub enum Interrupted {
 
 #[derive(Debug, Clone)]
 pub struct Terminator {
-    interrupt_tx: broadcast::Sender<Interrupted>,
+    interrupt_sender: broadcast::Sender<Interrupted>,
 }
 
 impl Terminator {
     pub fn new(interrupt_tx: broadcast::Sender<Interrupted>) -> Self {
-        Self { interrupt_tx }
+        Self { interrupt_sender: interrupt_tx }
     }
 
     pub fn terminate(&mut self, interrupted: Interrupted) -> anyhow::Result<()> {
-        self.interrupt_tx.send(interrupted)?;
+        self.interrupt_sender.send(interrupted)?;
 
         Ok(())
     }
@@ -27,14 +27,13 @@ impl Terminator {
 
 #[cfg(unix)]
 async fn terminate_by_unix_signal(mut terminator: Terminator) {
-    let mut interrupt_signal = signal(tokio::signal::unix::SignalKind::interrupt())
-        .expect("failed to create interrupt signal stream");
+    let mut interrupt_signal = signal(tokio::signal::unix::SignalKind::interrupt()).expect(
+        "failed to create interrupt signal stream"
+    );
 
     interrupt_signal.recv().await;
 
-    terminator
-        .terminate(Interrupted::OsSigInt)
-        .expect("failed to send interrupt signal");
+    terminator.terminate(Interrupted::OsSigInt).expect("failed to send interrupt signal");
 }
 
 // create a broadcast channel for retrieving the application kill signal
