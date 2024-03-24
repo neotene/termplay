@@ -5,14 +5,14 @@ use crate::store::{ action::Action, state::State };
 
 use super::{
     pages::login_page::login_page::LoginPage,
-    ui_object::ui_object::{ UiObject, UiRender },
+    ui_object::ui_object::{ UIObject, UiRender },
 };
 
 pub struct Application {
     login_page: LoginPage,
 }
 
-impl UiObject for Application {
+impl UIObject for Application {
     fn new(state: &State, action_sender: UnboundedSender<Action>) -> Self {
         Self {
             login_page: LoginPage::new(state, action_sender),

@@ -37,7 +37,7 @@ impl Store {
                         Action::Login => {
                             print!("Logging in...");
                         },
-                        Action::Register => {
+                        Action::ShowRegister => {
                             println!("Registering...");
                         },
                         Action::Exit => {

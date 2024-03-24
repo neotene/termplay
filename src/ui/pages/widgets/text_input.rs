@@ -9,7 +9,7 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
     store::{ action::Action, state::State },
-    ui::ui_object::ui_object::{ UiObject, UiRender },
+    ui::ui_object::ui_object::{ UIObject, UiRender },
 };
 
 pub struct TextInput {
@@ -17,7 +17,7 @@ pub struct TextInput {
     cursor_position: usize,
 }
 
-impl UiObject for TextInput {
+impl UIObject for TextInput {
     fn new(_state: &State, _action_sender: UnboundedSender<Action>) -> Self {
         Self {
             text: String::new(),

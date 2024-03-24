@@ -1,5 +1,5 @@
 pub enum Action {
     Login,
-    Register,
+    ShowRegister,
     Exit,
 }

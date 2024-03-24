@@ -11,7 +11,7 @@ use tokio::sync::{ broadcast, mpsc::{ self, UnboundedReceiver } };
 use tokio_stream::StreamExt;
 use crate::{ store::action::Action, termination::Interrupted, ui::ui_object::ui_object::UiRender };
 
-use super::{ application::Application, ui_object::ui_object::UiObject };
+use super::{ application::Application, ui_object::ui_object::UIObject };
 
 pub struct UI {
     action_sender: mpsc::UnboundedSender<Action>,
