@@ -1,5 +1,5 @@
 use ratatui::backend::Backend;
-use ratatui::layout::{ self, Constraint, Layout, Rect };
+use ratatui::layout::{ self, Constraint, Layout };
 use ratatui::style::{ Color, Style };
 use ratatui::widgets::{ Block, Borders };
 use ratatui::Frame;

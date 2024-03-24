@@ -21,15 +21,15 @@ impl Store {
 
     pub async fn do_loop(
         &self,
-        terminator: Terminator,
+        _terminator: Terminator,
         mut action_receiver: mpsc::UnboundedReceiver<Action>,
-        interrupt_receiver: broadcast::Receiver<Interrupted>
+        _interrupt_receiver: broadcast::Receiver<Interrupted>
     ) -> anyhow::Result<Interrupted> {
-        let mut state = State::default();
+        let state = State::default();
 
         self.state_sender.send(state.clone())?;
 
-        let mut ticker = tokio::time::interval(Duration::from_secs(1));
+        let _ticker = tokio::time::interval(Duration::from_secs(1));
 
         loop {
             tokio::select! {
