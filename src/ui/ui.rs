@@ -2,7 +2,7 @@ use std::io::{ self, Stdout };
 
 use anyhow::Context;
 use crossterm::{
-    event::{ DisableMouseCapture, EnableMouseCapture, Event, EventStream },
+    event::{ DisableMouseCapture, EnableMouseCapture, EventStream },
     execute,
     terminal::{ disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen },
 };

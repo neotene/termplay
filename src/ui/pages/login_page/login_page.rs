@@ -124,7 +124,7 @@ impl UIObject for LoginPage {
                             _ => {}
                         }
                     }
-                    crossterm::event::KeyCode::Char(c) => {
+                    crossterm::event::KeyCode::Char(_c) => {
                         match self.last_hovered_section {
                             Focus::LoginField => {
                                 self.login_field.handle_key_event(event);
