@@ -8,6 +8,6 @@ pub trait UIObject {
     fn handle_key_event(&mut self, event: crossterm::event::Event);
 }
 
-pub trait UiRender<Properties> {
+pub trait UIRender<Properties> {
     fn render<B: Backend>(&self, frame: &mut Frame<B>, properties: Properties);
 }

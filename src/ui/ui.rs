@@ -9,7 +9,7 @@ use crossterm::{
 use ratatui::{ backend::CrosstermBackend, Terminal };
 use tokio::sync::{ broadcast, mpsc::{ self, UnboundedReceiver } };
 use tokio_stream::StreamExt;
-use crate::{ store::action::Action, termination::Interrupted, ui::ui_object::ui_object::UiRender };
+use crate::{ store::action::Action, termination::Interrupted, ui::ui_object::ui_object::UIRender };
 
 use super::{ application::Application, ui_object::ui_object::UIObject };
 

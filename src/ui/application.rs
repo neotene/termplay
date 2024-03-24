@@ -5,7 +5,7 @@ use crate::store::{ action::Action, state::State };
 
 use super::{
     pages::login_page::login_page::LoginPage,
-    ui_object::ui_object::{ UIObject, UiRender },
+    ui_object::ui_object::{ UIObject, UIRender },
 };
 
 pub struct Application {
@@ -24,7 +24,7 @@ impl UIObject for Application {
     }
 }
 
-impl UiRender<()> for Application {
+impl UIRender<()> for Application {
     fn render<B: Backend>(&self, frame: &mut Frame<B>, properties: ()) {
         self.login_page.render(frame, properties);
     }

@@ -10,7 +10,7 @@ use crate::store::action::Action;
 use crate::store::state::State;
 use crate::ui::pages::widgets::button::{ self, Button };
 use crate::ui::pages::widgets::text_input::{ self, TextInput };
-use crate::ui::ui_object::ui_object::{ UIObject, UiRender };
+use crate::ui::ui_object::ui_object::{ UIObject, UIRender };
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Focus {
@@ -139,7 +139,7 @@ impl UIObject for LoginPage {
     }
 }
 
-impl UiRender<()> for LoginPage {
+impl UIRender<()> for LoginPage {
     fn render<B: Backend>(&self, frame: &mut Frame<B>, _properties: ()) {
         let page_block = Block::default()
             .title("Termplay")

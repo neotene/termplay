@@ -9,7 +9,7 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
     store::{ action::Action, state::State },
-    ui::ui_object::ui_object::{ UIObject, UiRender },
+    ui::ui_object::ui_object::{ UIObject, UIRender },
 };
 
 pub struct TextInput {
@@ -99,9 +99,9 @@ pub struct RenderProperties {
     pub show_cursor: bool,
 }
 
-impl UiRender<RenderProperties> for TextInput {
+impl UIRender<RenderProperties> for TextInput {
     fn render<B: Backend>(&self, frame: &mut Frame<B>, properties: RenderProperties) {
-        let paragraph = Paragraph::new(self.text.clone())
+        let paragraph = Paragraph::new(self.text.as_str())
             .style(Style::default().fg(Color::White))
             .block(
                 Block::default()

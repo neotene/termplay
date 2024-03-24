@@ -9,7 +9,7 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
     store::{ action::Action, state::State },
-    ui::ui_object::ui_object::{ UIObject, UiRender },
+    ui::ui_object::ui_object::{ UIObject, UIRender },
 };
 
 pub struct Button {
@@ -44,7 +44,7 @@ pub struct RenderProperties {
     pub area: Rect,
 }
 
-impl UiRender<RenderProperties> for Button {
+impl UIRender<RenderProperties> for Button {
     fn render<B: Backend>(&self, frame: &mut Frame<B>, properties: RenderProperties) {
         let style = Style::default().fg(properties.border_color);
         let paragraph = Paragraph::new(properties.label.clone())
