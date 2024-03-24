@@ -1,25 +1,25 @@
-use state_store::StateStore;
+use store::store::Store;
 use termination::create_termination;
-use ui_management::UiManager;
+use ui::ui::UI;
 
-mod state_store;
+mod store;
 mod termination;
-mod ui_management;
+mod ui;
 
 use termination::{ Interrupted, Terminator };
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let (terminator, mut interrupt_rx) = create_termination();
-    let (state_store, state_rx) = StateStore::new();
-    let (ui_manager, action_rx) = UiManager::new();
+    let (terminator, mut interrupt_receiver) = create_termination();
+    let (store, state_receiver) = Store::new();
+    let (ui, action_receiver) = UI::new();
 
     tokio::try_join!(
-        state_store.main_loop(terminator, action_rx, interrupt_rx.resubscribe()),
-        ui_manager.main_loop(state_rx, interrupt_rx.resubscribe())
+        store.do_loop(terminator, action_receiver, interrupt_receiver.resubscribe()),
+        ui.do_loop(state_receiver, interrupt_receiver.resubscribe())
     )?;
 
-    if let Ok(reason) = interrupt_rx.recv().await {
+    if let Ok(reason) = interrupt_receiver.recv().await {
         match reason {
             Interrupted::UserInt => println!("exited per user request"),
             Interrupted::OsSigInt => println!("exited because of an os sig int"),
