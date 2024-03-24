@@ -19,9 +19,9 @@ impl Store {
 
     pub async fn do_loop(
         &self,
-        terminator: Terminator,
-        action_receiver: mpsc::UnboundedReceiver<Action>,
-        mut interrupt_receiver: broadcast::Receiver<Interrupted>
+        _terminator: Terminator,
+        _action_receiver: mpsc::UnboundedReceiver<Action>,
+        _interrupt_receiver: broadcast::Receiver<Interrupted>
     ) -> anyhow::Result<Interrupted> {
         Ok(Interrupted::UserInt)
     }

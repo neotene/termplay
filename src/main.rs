@@ -6,7 +6,7 @@ mod store;
 mod termination;
 mod ui;
 
-use termination::{ Interrupted, Terminator };
+use termination::{ Interrupted };
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
