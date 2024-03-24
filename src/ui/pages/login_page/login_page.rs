@@ -1,7 +1,7 @@
 use ratatui::layout::Rect;
 use ratatui::Frame;
 use tokio::sync::mpsc::UnboundedSender;
-use tui_textarea::TextArea;
+
 
 use crate::store::action::Action;
 use crate::store::state::State;
@@ -19,7 +19,7 @@ impl UiObject for LoginPage {
         }
     }
 
-    fn handle_key_event(&mut self, event: crossterm::event::Event) {}
+    fn handle_key_event(&mut self, _event: crossterm::event::Event) {}
 }
 
 impl UiRender<()> for LoginPage {
