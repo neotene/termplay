@@ -1,4 +1,10 @@
-use ratatui::{ layout::Rect, style::{ Color, Style }, widgets::{ Block, Borders }, Frame };
+use ratatui::{
+    backend::Backend,
+    layout::Rect,
+    style::{ Color, Style },
+    widgets::{ Block, Borders },
+    Frame,
+};
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
@@ -75,11 +81,11 @@ pub struct RenderProperties {
 }
 
 impl UiRender<RenderProperties> for TextInput {
-    fn render(&self, frame: &mut Frame, properties: RenderProperties) {
+    fn render<B: Backend>(&self, frame: &mut Frame<B>, properties: RenderProperties) {
         let block = Block::default()
             .title(properties.title)
             .borders(Borders::ALL)
             .border_style(Style::default().fg(properties.border_color));
-        frame.render_widget(&block, properties.area);
+        frame.render_widget(block, properties.area);
     }
 }

@@ -1,5 +1,6 @@
 use std::io::{ self, Stdout };
 
+use anyhow::Context;
 use crossterm::{
     event::{ DisableMouseCapture, EnableMouseCapture, Event, EventStream },
     execute,
@@ -7,8 +8,8 @@ use crossterm::{
 };
 use ratatui::{ backend::CrosstermBackend, Terminal };
 use tokio::sync::{ broadcast, mpsc::{ self, UnboundedReceiver } };
-
-use crate::{ store::action::Action, termination::Interrupted };
+use tokio_stream::StreamExt;
+use crate::{ store::action::Action, termination::Interrupted, ui::ui_object::ui_object::UiRender };
 
 use super::{ application::Application, ui_object::ui_object::UiObject };
 
@@ -38,26 +39,22 @@ impl UI {
 
         let result: anyhow::Result<Interrupted> = loop {
             tokio::select! {
-               maybe_event = crossterm_events.next() => match maybe_event {
-                    Some(Ok(Event::Key(key)))  => {
-                        app_router.handle_key_event(key);
-                    },
-                    None => break Ok(Interrupted::UserInt),
-                    _ => (),
-                },
+               Some(maybe_event) = crossterm_events.next() => {
+                    application.handle_key_event(maybe_event.unwrap());
+               },
                 // Handle state updates
-                Some(state) = state_rx.recv() => {
-                    app_router = app_router.move_with_state(&state);
+                Some(state) = _state_receiver.recv() => {
+                    // app_router = app_router.move_with_state(&state);
                 },
                 // Catch and handle interrupt signal to gracefully shutdown
-                Ok(interrupted) = interrupt_rx.recv() => {
+                Ok(interrupted) = _interrupt_receiver.recv() => {
                     break Ok(interrupted);
                 }
             }
 
             if
                 let Err(err) = terminal
-                    .draw(|frame| app_router.render(frame, ()))
+                    .draw(|frame| application.render(frame, ()))
                     .context("could not render to the terminal")
             {
                 break Err(err);

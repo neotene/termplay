@@ -1,7 +1,9 @@
-use ratatui::layout::Rect;
+use ratatui::backend::Backend;
+use ratatui::layout::{ self, Constraint, Layout, Rect };
+use ratatui::style::{ Color, Style };
+use ratatui::widgets::{ Block, Borders };
 use ratatui::Frame;
 use tokio::sync::mpsc::UnboundedSender;
-
 
 use crate::store::action::Action;
 use crate::store::state::State;
@@ -23,10 +25,55 @@ impl UiObject for LoginPage {
 }
 
 impl UiRender<()> for LoginPage {
-    fn render(&self, frame: &mut Frame, _properties: ()) {
+    fn render<B: Backend>(&self, frame: &mut Frame<B>, _properties: ()) {
+        let areas_vert_3 = Layout::default()
+            .direction(layout::Direction::Vertical)
+            .constraints([
+                Constraint::Ratio(1, 3),
+                Constraint::Ratio(1, 3),
+                Constraint::Ratio(1, 3),
+            ])
+            .split(frame.size());
+
+        let areas_center_3 = Layout::default()
+            .direction(layout::Direction::Horizontal)
+            .constraints([
+                Constraint::Ratio(1, 3),
+                Constraint::Ratio(1, 3),
+                Constraint::Ratio(1, 3),
+            ])
+            .split(areas_vert_3[1]);
+
+        let mut modal_area = areas_center_3[1];
+
+        let modal_block = Block::default()
+            .title("Welcome to Termplay!")
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::White))
+            .style(Style::default().bg(Color::Black));
+
+        // RENDER MODAL BLOCK
+        frame.render_widget(modal_block, modal_area);
+
+        modal_area.x += 2;
+        modal_area.y += 2;
+        modal_area.width -= 4;
+        modal_area.height -= 4;
+
+        let modal_areas_vert_4 = Layout::default()
+            .constraints([
+                Constraint::Ratio(1, 4),
+                Constraint::Ratio(1, 4),
+                Constraint::Ratio(1, 4),
+                Constraint::Ratio(1, 4),
+            ])
+            .split(modal_area);
+
+        let mut login_field_area = modal_areas_vert_4[0];
+        login_field_area.height = 3;
         self.login_field.render(frame, text_input::RenderProperties {
             title: String::from("Login"),
-            area: Rect::new(0, 0, 20, 1),
+            area: modal_areas_vert_4[0],
             border_color: ratatui::style::Color::White,
         });
     }

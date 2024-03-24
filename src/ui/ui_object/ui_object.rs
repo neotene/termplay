@@ -1,4 +1,4 @@
-use ratatui::Frame;
+use ratatui::{ backend::Backend, Frame };
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::store::{ action::Action, state::State };
@@ -9,5 +9,5 @@ pub trait UiObject {
 }
 
 pub trait UiRender<Properties> {
-    fn render(&self, frame: &mut Frame, properties: Properties);
+    fn render<B: Backend>(&self, frame: &mut Frame<B>, properties: Properties);
 }

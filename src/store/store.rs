@@ -22,7 +22,7 @@ impl Store {
     pub async fn do_loop(
         &self,
         terminator: Terminator,
-        action_receiver: mpsc::UnboundedReceiver<Action>,
+        mut action_receiver: mpsc::UnboundedReceiver<Action>,
         interrupt_receiver: broadcast::Receiver<Interrupted>
     ) -> anyhow::Result<Interrupted> {
         let mut state = State::default();
