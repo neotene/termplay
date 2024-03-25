@@ -9,9 +9,10 @@ use crossterm::{
 use ratatui::{ backend::CrosstermBackend, Terminal };
 use tokio::sync::{ broadcast, mpsc::{ self, UnboundedReceiver } };
 use tokio_stream::StreamExt;
-use crate::{ store::action::Action, termination::Interrupted, ui::ui_object::ui_object::UIRender };
+use crate::{ store::action::Action, termination::Interrupted, ui::ui_object::UIRender };
 
-use super::{ application::Application, ui_object::ui_object::UIObject };
+use super::{ application, ui_object::UIObject };
+use application::Application;
 
 pub struct UI {
     action_sender: mpsc::UnboundedSender<Action>,
@@ -31,7 +32,7 @@ impl UI {
         let mut application = {
             let state = _state_receiver.recv().await.unwrap();
 
-            Application::new(&state, self.action_sender.clone())
+            Application::new(&state, self.action_sender.clone(), ())
         };
 
         let mut terminal = setup_terminal()?;

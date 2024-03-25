@@ -8,9 +8,9 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use crate::store::action::Action;
 use crate::store::state::State;
-use crate::ui::pages::widgets::button::{ self, Button };
-use crate::ui::pages::widgets::text_input::{ self, TextInput };
-use crate::ui::ui_object::ui_object::{ UIObject, UIRender };
+use crate::ui::button::{ self, Button };
+use crate::ui::text_input::{ self, TextInput };
+use crate::ui::ui_object::{ UIObject, UIRender };
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Focus {
@@ -88,13 +88,27 @@ impl LoginPage {
     }
 }
 
-impl UIObject for LoginPage {
-    fn new(state: &State, action_sender: UnboundedSender<Action>) -> Self {
+impl UIObject<()> for LoginPage {
+    fn new(state: &State, action_sender: UnboundedSender<Action>, _: ()) -> Self {
         Self {
-            login_field: TextInput::new(state, action_sender.clone()),
-            password_field: TextInput::new(state, action_sender.clone()),
-            login_button: Button::new(state, action_sender.clone()),
-            register_button: Button::new(state, action_sender.clone()),
+            login_field: TextInput::new(state, action_sender.clone(), text_input::InitProperties {
+                cursor_limit: 40,
+                is_password: false,
+            }),
+            password_field: TextInput::new(
+                state,
+                action_sender.clone(),
+                text_input::InitProperties {
+                    cursor_limit: 40,
+                    is_password: true,
+                }
+            ),
+            login_button: Button::new(state, action_sender.clone(), button::InitProperties {
+                label: String::from("Login"),
+            }),
+            register_button: Button::new(state, action_sender.clone(), button::InitProperties {
+                label: String::from("Register"),
+            }),
             last_hovered_section: DEFAULT_HOVERED_SECTION,
             active_section: None,
         }
@@ -226,7 +240,7 @@ impl UIRender<()> for LoginPage {
         login_button_area.height = 3;
         // RENDER LOGIN BUTTON
         self.login_button.render(frame, button::RenderProperties {
-            label: String::from("Login"),
+            // label: String::from("Login"),
             border_color: self.calculate_border_color(Focus::LoginButton),
             area: login_button_area,
         });
@@ -235,7 +249,7 @@ impl UIRender<()> for LoginPage {
         register_button_area.height = 3;
         // RENDER REGISTER BUTTON
         self.register_button.render(frame, button::RenderProperties {
-            label: String::from("Register"),
+            // label: String::from("Register"),
             border_color: self.calculate_border_color(Focus::RegisterButton),
             area: register_button_area,
         });

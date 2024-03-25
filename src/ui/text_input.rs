@@ -7,21 +7,31 @@ use ratatui::{
 };
 use tokio::sync::mpsc::UnboundedSender;
 
-use crate::{
-    store::{ action::Action, state::State },
-    ui::ui_object::ui_object::{ UIObject, UIRender },
-};
+use crate::{ store::{ action::Action, state::State }, ui::ui_object::{ UIObject, UIRender } };
 
 pub struct TextInput {
     text: String,
     cursor_position: usize,
+    cursor_limit: usize,
+    is_password: bool,
 }
 
-impl UIObject for TextInput {
-    fn new(_state: &State, _action_sender: UnboundedSender<Action>) -> Self {
+pub struct InitProperties {
+    pub cursor_limit: usize,
+    pub is_password: bool,
+}
+
+impl UIObject<InitProperties> for TextInput {
+    fn new(
+        _state: &State,
+        _action_sender: UnboundedSender<Action>,
+        init_properties: InitProperties
+    ) -> Self {
         Self {
             text: String::new(),
             cursor_position: 0,
+            cursor_limit: init_properties.cursor_limit,
+            is_password: init_properties.is_password,
         }
     }
     fn handle_key_event(&mut self, event: crossterm::event::Event) {
@@ -60,6 +70,10 @@ impl TextInput {
     }
 
     fn enter_char(&mut self, new_char: char) {
+        if self.text.len() >= self.cursor_limit {
+            return;
+        }
+
         self.text.insert(self.cursor_position, new_char);
 
         self.move_cursor_right();
@@ -88,7 +102,7 @@ impl TextInput {
     }
 
     fn clamp_cursor(&self, new_cursor_pos: usize) -> usize {
-        new_cursor_pos.clamp(0, self.text.len())
+        new_cursor_pos.clamp(0, self.cursor_limit)
     }
 }
 
@@ -101,7 +115,13 @@ pub struct RenderProperties {
 
 impl UIRender<RenderProperties> for TextInput {
     fn render<B: Backend>(&self, frame: &mut Frame<B>, properties: RenderProperties) {
-        let paragraph = Paragraph::new(self.text.as_str())
+        let text_to_render: String;
+        if self.is_password {
+            text_to_render = "*".repeat(self.text.len());
+        } else {
+            text_to_render = self.text.clone();
+        }
+        let paragraph = Paragraph::new(text_to_render)
             .style(Style::default().fg(Color::White))
             .block(
                 Block::default()

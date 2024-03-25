@@ -3,19 +3,16 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use crate::store::{ action::Action, state::State };
 
-use super::{
-    pages::login_page::login_page::LoginPage,
-    ui_object::ui_object::{ UIObject, UIRender },
-};
+use super::{ login_page::LoginPage, ui_object::{ UIObject, UIRender } };
 
 pub struct Application {
     login_page: LoginPage,
 }
 
-impl UIObject for Application {
-    fn new(state: &State, action_sender: UnboundedSender<Action>) -> Self {
+impl UIObject<()> for Application {
+    fn new(state: &State, action_sender: UnboundedSender<Action>, _: ()) -> Self {
         Self {
-            login_page: LoginPage::new(state, action_sender),
+            login_page: LoginPage::new(state, action_sender, ()),
         }
     }
 
