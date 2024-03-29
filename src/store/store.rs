@@ -17,7 +17,9 @@ pub struct Store {
     state_sender: mpsc::UnboundedSender<State>,
 }
 
-use tokio_stream::{ wrappers::LinesStream, Stream, StreamExt };
+use tokio_stream::{ wrappers::LinesStream, Stream };
+
+use tokio_openssl::SslStream;
 
 pub type BoxedStream<Item> = Pin<Box<dyn Stream<Item = Item> + Send>>;
 
