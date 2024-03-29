@@ -70,14 +70,6 @@ impl ExitModal {
             _ => Color::Reset,
         }
     }
-
-    fn calculate_show_cursor(&self, focus: Focus) -> bool {
-        match (self.active_section.as_ref(), &self.last_hovered_section) {
-            (Some(active_section), _) if active_section.eq(&focus) => false,
-            (_, last_hovered_section) if last_hovered_section.eq(&focus) => true,
-            _ => false,
-        }
-    }
 }
 
 impl UIObject<()> for ExitModal {
@@ -131,7 +123,6 @@ impl UIObject<()> for ExitModal {
                             }
                         }
                     }
-                    _ => {}
                 }
             }
             _ => {}
