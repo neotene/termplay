@@ -18,10 +18,11 @@ pub enum Focus {
     PasswordField,
     LoginButton,
     RegisterButton,
+    ExitButton,
 }
 
 impl Focus {
-    pub const COUNT: usize = 4;
+    pub const COUNT: usize = 5;
 
     fn to_usize(&self) -> usize {
         match self {
@@ -29,6 +30,7 @@ impl Focus {
             Focus::PasswordField => 1,
             Focus::LoginButton => 2,
             Focus::RegisterButton => 3,
+            Focus::ExitButton => 4,
         }
     }
 }
@@ -42,6 +44,7 @@ impl TryFrom<usize> for Focus {
             1 => Ok(Focus::PasswordField),
             2 => Ok(Focus::LoginButton),
             3 => Ok(Focus::RegisterButton),
+            4 => Ok(Focus::ExitButton),
             _ => Err(()),
         }
     }
@@ -54,6 +57,7 @@ pub struct LoginPage {
     password_field: TextInput,
     login_button: Button,
     register_button: Button,
+    exit_button: Button,
     last_hovered_section: Focus,
     active_section: Option<Focus>,
 }
@@ -111,6 +115,10 @@ impl UIObject<()> for LoginPage {
                 label: String::from("Register"),
                 action_to_send: Action::ShowRegister,
             }),
+            exit_button: Button::new(state, action_sender.clone(), button::InitProperties {
+                label: String::from("Exit"),
+                action_to_send: Action::Exit,
+            }),
             last_hovered_section: DEFAULT_HOVERED_SECTION,
             active_section: None,
         }
@@ -122,6 +130,7 @@ impl UIObject<()> for LoginPage {
             password_field: self.password_field.move_with_state(state),
             login_button: self.login_button.move_with_state(state),
             register_button: self.register_button.move_with_state(state),
+            exit_button: self.exit_button.move_with_state(state),
             last_hovered_section: self.last_hovered_section,
             active_section: self.active_section,
         }
@@ -156,6 +165,9 @@ impl UIObject<()> for LoginPage {
                             }
                             Focus::RegisterButton => {
                                 self.register_button.handle_key_event(event);
+                            }
+                            Focus::ExitButton => {
+                                self.exit_button.handle_key_event(event);
                             }
                         }
                     }
@@ -213,17 +225,18 @@ impl UIRender<()> for LoginPage {
         modal_area.width -= 8;
         modal_area.height -= 4;
 
-        let modal_areas_vert_4 = Layout::default()
+        let modal_areas_vert_5 = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
                 Constraint::Min(3),
                 Constraint::Min(3),
                 Constraint::Percentage(100),
                 Constraint::Min(3),
+                Constraint::Min(3),
             ])
             .split(modal_area);
 
-        let mut login_field_area = modal_areas_vert_4[0];
+        let mut login_field_area = modal_areas_vert_5[0];
         login_field_area.height = 3;
         // RENDER LOGIN FIELD
         self.login_field.render(frame, text_input::RenderProperties {
@@ -233,7 +246,7 @@ impl UIRender<()> for LoginPage {
             show_cursor: self.calculate_show_cursor(Focus::LoginField),
         });
 
-        let mut password_field_area = modal_areas_vert_4[1];
+        let mut password_field_area = modal_areas_vert_5[1];
         password_field_area.height = 3;
         // RENDER PASSWORD FIELD
         self.password_field.render(frame, text_input::RenderProperties {
@@ -243,7 +256,7 @@ impl UIRender<()> for LoginPage {
             show_cursor: self.calculate_show_cursor(Focus::PasswordField),
         });
 
-        let buttons_area = modal_areas_vert_4[3];
+        let buttons_area = modal_areas_vert_5[3];
         let modal_buttons_areas_horiz_3 = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Min(15), Constraint::Percentage(100), Constraint::Min(15)])
@@ -265,6 +278,15 @@ impl UIRender<()> for LoginPage {
             // label: String::from("Register"),
             border_color: self.calculate_border_color(Focus::RegisterButton),
             area: register_button_area,
+        });
+
+        let mut exit_button_area = modal_areas_vert_5[4];
+        exit_button_area.height = 3;
+        // RENDER EXIT BUTTON
+        self.exit_button.render(frame, button::RenderProperties {
+            // label: String::from("Exit"),
+            border_color: self.calculate_border_color(Focus::ExitButton),
+            area: exit_button_area,
         });
     }
 }

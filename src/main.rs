@@ -6,7 +6,7 @@ mod store;
 mod termination;
 mod ui;
 
-use termination::{ Interrupted };
+use termination::Interrupted;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -21,11 +21,12 @@ async fn main() -> anyhow::Result<()> {
 
     if let Ok(reason) = interrupt_receiver.recv().await {
         match reason {
-            Interrupted::UserInt => println!("exited per user request"),
-            Interrupted::OsSigInt => println!("exited because of an os sig int"),
+            Interrupted::UserInt => println!("Goodbye!"),
+            #[cfg(unix)]
+            Interrupted::OsSigInt => println!("Interrupted."),
         }
     } else {
-        println!("exited because of an unexpected error");
+        println!("Unexpected termination.");
     }
 
     Ok(())

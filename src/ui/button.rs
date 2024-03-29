@@ -42,7 +42,9 @@ impl UIObject<InitProperties> for Button {
             crossterm::event::Event::Key(key) => {
                 match key.code {
                     crossterm::event::KeyCode::Enter => {
-                        self.action_sender.send(self.action_to_send.clone());
+                        if let Err(err) = self.action_sender.send(self.action_to_send.clone()) {
+                            eprintln!("Failed to send action: {:?}", err);
+                        }
                     }
                     _ => {}
                 }

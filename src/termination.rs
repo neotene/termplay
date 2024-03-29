@@ -4,6 +4,7 @@ use tokio::sync::broadcast;
 
 #[derive(Debug, Clone)]
 pub enum Interrupted {
+    #[cfg(unix)]
     OsSigInt,
     UserInt,
 }

@@ -21,7 +21,7 @@ impl Store {
 
     pub async fn do_loop(
         &self,
-        _terminator: Terminator,
+        mut terminator: Terminator,
         mut action_receiver: mpsc::UnboundedReceiver<Action>,
         _interrupt_receiver: broadcast::Receiver<Interrupted>
     ) -> anyhow::Result<Interrupted> {
@@ -31,7 +31,7 @@ impl Store {
 
         let _ticker = tokio::time::interval(Duration::from_secs(1));
 
-        loop {
+        let result = loop {
             tokio::select! {
                     Some(action) = action_receiver.recv() => match action {
                         Action::None => {
@@ -49,11 +49,12 @@ impl Store {
                             // println!("Registering...");
                         },
                         Action::Exit => {
-                            break;
+                            terminator.terminate(Interrupted::UserInt)?;
+                            break Interrupted::UserInt;
                         },
                     }
                 }
-        }
-        Ok(Interrupted::UserInt)
+        };
+        Ok(result)
     }
 }
