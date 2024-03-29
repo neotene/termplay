@@ -12,7 +12,7 @@ use crate::ui::button::{ self, Button };
 use crate::ui::text_input::{ self, TextInput };
 use crate::ui::ui_object::{ UIObject, UIRender };
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum Focus {
     LoginField,
     PasswordField,
