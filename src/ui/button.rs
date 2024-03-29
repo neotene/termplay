@@ -12,10 +12,12 @@ use crate::{ store::{ action::Action, state::State }, ui::ui_object::{ UIObject,
 pub struct Button {
     action_sender: UnboundedSender<Action>,
     pub label: String,
+    pub action_to_send: Action,
 }
 
 pub struct InitProperties {
     pub label: String,
+    pub action_to_send: Action,
 }
 
 impl UIObject<InitProperties> for Button {
@@ -27,7 +29,12 @@ impl UIObject<InitProperties> for Button {
         Self {
             action_sender,
             label: init_properties.label,
+            action_to_send: init_properties.action_to_send,
         }
+    }
+
+    fn move_with_state(self, _state: &State) -> Self {
+        self
     }
 
     fn handle_key_event(&mut self, event: crossterm::event::Event) {
@@ -35,7 +42,7 @@ impl UIObject<InitProperties> for Button {
             crossterm::event::Event::Key(key) => {
                 match key.code {
                     crossterm::event::KeyCode::Enter => {
-                        self.action_sender.send(Action::ShowRegister);
+                        self.action_sender.send(self.action_to_send.clone());
                     }
                     _ => {}
                 }

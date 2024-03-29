@@ -25,7 +25,7 @@ impl Store {
         mut action_receiver: mpsc::UnboundedReceiver<Action>,
         _interrupt_receiver: broadcast::Receiver<Interrupted>
     ) -> anyhow::Result<Interrupted> {
-        let state = State::default();
+        let mut state = State::default();
 
         self.state_sender.send(state.clone())?;
 
@@ -34,11 +34,19 @@ impl Store {
         loop {
             tokio::select! {
                     Some(action) = action_receiver.recv() => match action {
+                        Action::None => {
+                            // println!("None");
+                        },
                         Action::Login => {
-                            print!("Logging in...");
+                            // print!("Logging in...");
                         },
                         Action::ShowRegister => {
-                            println!("Registering...");
+                            state.is_registering = true;
+                            // println!("Registering...");
+                            self.state_sender.send(state.clone())?;
+                        },
+                        Action::Register => {
+                            // println!("Registering...");
                         },
                         Action::Exit => {
                             break;

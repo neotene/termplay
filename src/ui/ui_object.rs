@@ -8,7 +8,9 @@ pub trait UIObject<InitProperties> {
         state: &State,
         action_sender: UnboundedSender<Action>,
         init_properties: InitProperties
-    ) -> Self;
+    ) -> Self
+        where Self: Sized;
+    fn move_with_state(self, state: &State) -> Self where Self: Sized;
     fn handle_key_event(&mut self, event: crossterm::event::Event);
 }
 

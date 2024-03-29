@@ -26,11 +26,11 @@ impl UI {
     }
     pub async fn do_loop(
         &self,
-        mut _state_receiver: UnboundedReceiver<crate::store::state::State>,
-        mut _interrupt_receiver: broadcast::Receiver<Interrupted>
+        mut state_receiver: UnboundedReceiver<crate::store::state::State>,
+        mut interrupt_receiver: broadcast::Receiver<Interrupted>
     ) -> anyhow::Result<Interrupted> {
         let mut application = {
-            let state = _state_receiver.recv().await.unwrap();
+            let state = state_receiver.recv().await.unwrap();
 
             Application::new(&state, self.action_sender.clone(), ())
         };
@@ -44,11 +44,11 @@ impl UI {
                     application.handle_key_event(maybe_event.unwrap());
                 },
                 // Handle state updates
-                Some(_state) = _state_receiver.recv() => {
-                    // app_router = app_router.move_with_state(&state);
+                Some(state) = state_receiver.recv() => {
+                    application = application.move_with_state(&state);
                 },
                 // Catch and handle interrupt signal to gracefully shutdown
-                Ok(interrupted) = _interrupt_receiver.recv() => {
+                Ok(interrupted) = interrupt_receiver.recv() => {
                     break Ok(interrupted);
                 }
             }

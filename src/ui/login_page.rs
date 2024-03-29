@@ -105,12 +105,25 @@ impl UIObject<()> for LoginPage {
             ),
             login_button: Button::new(state, action_sender.clone(), button::InitProperties {
                 label: String::from("Login"),
+                action_to_send: Action::Login,
             }),
             register_button: Button::new(state, action_sender.clone(), button::InitProperties {
                 label: String::from("Register"),
+                action_to_send: Action::ShowRegister,
             }),
             last_hovered_section: DEFAULT_HOVERED_SECTION,
             active_section: None,
+        }
+    }
+
+    fn move_with_state(self, state: &State) -> Self {
+        Self {
+            login_field: self.login_field.move_with_state(state),
+            password_field: self.password_field.move_with_state(state),
+            login_button: self.login_button.move_with_state(state),
+            register_button: self.register_button.move_with_state(state),
+            last_hovered_section: self.last_hovered_section,
+            active_section: self.active_section,
         }
     }
 

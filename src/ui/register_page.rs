@@ -134,16 +134,31 @@ impl UIObject<()> for RegisterPage {
             ),
             back_button: Button::new(state, action_sender.clone(), super::button::InitProperties {
                 label: String::from_str("Back").unwrap(),
+                action_to_send: Action::None,
             }),
             register_button: Button::new(
                 state,
                 action_sender.clone(),
                 super::button::InitProperties {
                     label: String::from_str("Register").unwrap(),
+                    action_to_send: Action::Register,
                 }
             ),
             last_hovered_section: DEFAULT_HOVERED_SECTION,
             active_section: None,
+        }
+    }
+
+    fn move_with_state(self, state: &State) -> Self {
+        Self {
+            login_field: self.login_field.move_with_state(state),
+            confirm_login_field: self.confirm_login_field.move_with_state(state),
+            password_field: self.password_field.move_with_state(state),
+            confirm_password_field: self.confirm_password_field.move_with_state(state),
+            back_button: self.back_button.move_with_state(state),
+            register_button: self.register_button.move_with_state(state),
+            last_hovered_section: self.last_hovered_section,
+            active_section: self.active_section,
         }
     }
 

@@ -17,22 +17,7 @@ enum ActivePage {
 pub struct Application {
     login_page: LoginPage,
     register_page: RegisterPage,
-}
-
-impl Application {
-    fn get_active_page_component(&self) -> &dyn UIObject<()> {
-        match self.props.active_page {
-            ActivePage::LoginPage => &self.login_page,
-            ActivePage::RegisterPage => &self.register_page,
-        }
-    }
-
-    fn get_active_page_component_mut(&mut self) -> &mut dyn UIObject {
-        match self.props.active_page {
-            ActivePage::LoginPage => &mut self.login_page,
-            ActivePage::RegisterPage => &mut self.register_page,
-        }
-    }
+    active_page: ActivePage,
 }
 
 impl UIObject<()> for Application {
@@ -40,16 +25,34 @@ impl UIObject<()> for Application {
         Self {
             login_page: LoginPage::new(state, action_sender.clone(), ()),
             register_page: RegisterPage::new(state, action_sender.clone(), ()),
+            active_page: ActivePage::LoginPage,
+        }
+    }
+
+    fn move_with_state(self, state: &State) -> Self {
+        Self {
+            login_page: self.login_page.move_with_state(state),
+            register_page: self.register_page.move_with_state(state),
+            active_page: match state.is_registering {
+                false => ActivePage::LoginPage,
+                true => ActivePage::RegisterPage,
+            },
         }
     }
 
     fn handle_key_event(&mut self, event: crossterm::event::Event) {
-        self.login_page.handle_key_event(event);
+        match self.active_page {
+            ActivePage::LoginPage => self.login_page.handle_key_event(event),
+            ActivePage::RegisterPage => self.register_page.handle_key_event(event),
+        }
     }
 }
 
 impl UIRender<()> for Application {
     fn render<B: Backend>(&self, frame: &mut Frame<B>, properties: ()) {
-        self.login_page.render(frame, properties);
+        match self.active_page {
+            ActivePage::LoginPage => self.login_page.render(frame, properties),
+            ActivePage::RegisterPage => self.register_page.render(frame, properties),
+        }
     }
 }

@@ -34,6 +34,11 @@ impl UIObject<InitProperties> for TextInput {
             is_password: init_properties.is_password,
         }
     }
+
+    fn move_with_state(self, _state: &State) -> Self {
+        self
+    }
+
     fn handle_key_event(&mut self, event: crossterm::event::Event) {
         match event {
             crossterm::event::Event::Key(key) => {
