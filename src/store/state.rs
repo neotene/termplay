@@ -9,6 +9,7 @@ pub struct State {
     pub register_password: String,
     pub register_confirm_password: String,
     pub error_message: String,
+    pub show_exit_confirmation: bool,
 }
 
 impl State {}

@@ -5,4 +5,6 @@ pub enum Action {
     ShowRegister,
     Register,
     Exit,
+    PreExit,
+    CancelExit,
 }

@@ -35,18 +35,22 @@ impl Store {
             tokio::select! {
                     Some(action) = action_receiver.recv() => match action {
                         Action::None => {
-                            // println!("None");
                         },
                         Action::Login => {
-                            // print!("Logging in...");
                         },
                         Action::ShowRegister => {
                             state.is_registering = true;
-                            // println!("Registering...");
                             self.state_sender.send(state.clone())?;
                         },
                         Action::Register => {
-                            // println!("Registering...");
+                        },
+                        Action::PreExit => {
+                            state.show_exit_confirmation = true;
+                            self.state_sender.send(state.clone())?;
+                        },
+                        Action::CancelExit => {
+                            state.show_exit_confirmation = false;
+                            self.state_sender.send(state.clone())?;
                         },
                         Action::Exit => {
                             terminator.terminate(Interrupted::UserInt)?;

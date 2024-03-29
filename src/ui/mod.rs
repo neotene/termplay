@@ -5,3 +5,4 @@ pub mod text_input;
 pub mod button;
 pub mod application;
 pub mod register_page;
+pub mod exit_modal;
