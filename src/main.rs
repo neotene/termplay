@@ -8,6 +8,8 @@ mod ui;
 
 use termination::Interrupted;
 
+#[macro_use]
+extern crate num_derive;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let (terminator, mut interrupt_receiver) = create_termination();

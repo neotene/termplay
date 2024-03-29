@@ -15,9 +15,10 @@ use super::{
     button::{ self, Button },
     text_input::{ self, TextInput },
     ui_object::{ UIObject, UIRender },
+    utils,
 };
 
-#[derive(Clone, PartialEq)]
+#[derive(FromPrimitive, ToPrimitive, Eq, PartialEq, Clone, Copy)]
 pub enum Focus {
     LoginField,
     ConfirmLoginField,
@@ -25,37 +26,6 @@ pub enum Focus {
     ConfirmPasswordField,
     BackButton,
     RegisterButton,
-}
-
-impl Focus {
-    pub const COUNT: usize = 6;
-
-    fn to_usize(&self) -> usize {
-        match self {
-            Focus::LoginField => 0,
-            Focus::ConfirmLoginField => 1,
-            Focus::PasswordField => 2,
-            Focus::ConfirmPasswordField => 3,
-            Focus::BackButton => 4,
-            Focus::RegisterButton => 5,
-        }
-    }
-}
-
-impl TryFrom<usize> for Focus {
-    type Error = ();
-
-    fn try_from(value: usize) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Focus::LoginField),
-            1 => Ok(Focus::ConfirmLoginField),
-            2 => Ok(Focus::PasswordField),
-            3 => Ok(Focus::ConfirmPasswordField),
-            4 => Ok(Focus::BackButton),
-            5 => Ok(Focus::RegisterButton),
-            _ => Err(()),
-        }
-    }
 }
 
 const DEFAULT_HOVERED_SECTION: Focus = Focus::LoginField;
@@ -72,26 +42,6 @@ pub struct RegisterPage {
 }
 
 impl RegisterPage {
-    fn hover_next(&mut self) {
-        let idx: usize = self.last_hovered_section.to_usize();
-        let next_idx = (idx + 1) % Focus::COUNT;
-        self.last_hovered_section = Focus::try_from(next_idx).unwrap();
-    }
-
-    fn hover_previous(&mut self) {
-        let idx: usize = self.last_hovered_section.to_usize();
-        let previous_idx = if idx == 0 { Focus::COUNT - 1 } else { idx - 1 };
-        self.last_hovered_section = Focus::try_from(previous_idx).unwrap();
-    }
-
-    fn calculate_border_color(&self, section: Focus) -> Color {
-        match (self.active_section.as_ref(), &self.last_hovered_section) {
-            (Some(active_section), _) if active_section.eq(&section) => Color::Yellow,
-            (_, last_hovered_section) if last_hovered_section.eq(&section) => Color::Blue,
-            _ => Color::Reset,
-        }
-    }
-
     fn calculate_show_cursor(&self, focus: Focus) -> bool {
         match (self.active_section.as_ref(), &self.last_hovered_section) {
             (Some(active_section), _) if active_section.eq(&focus) => false,
@@ -170,10 +120,20 @@ impl UIObject<()> for RegisterPage {
                 }
                 match key.code {
                     crossterm::event::KeyCode::Tab => {
-                        self.hover_next();
+                        self.last_hovered_section = utils::cycle(
+                            Focus::LoginField,
+                            Focus::RegisterButton,
+                            self.last_hovered_section,
+                            1
+                        );
                     }
                     crossterm::event::KeyCode::BackTab => {
-                        self.hover_previous();
+                        self.last_hovered_section = utils::cycle(
+                            Focus::LoginField,
+                            Focus::RegisterButton,
+                            self.last_hovered_section,
+                            -1
+                        );
                     }
                     _ => {
                         let active_section = self.active_section
@@ -272,7 +232,11 @@ impl UIRender<()> for RegisterPage {
         self.login_field.render(frame, text_input::RenderProperties {
             title: String::from("Login"),
             area: login_field_area,
-            border_color: self.calculate_border_color(Focus::LoginField),
+            border_color: utils::calculate_border_color(
+                self.active_section,
+                self.last_hovered_section,
+                Focus::LoginField
+            ),
             show_cursor: self.calculate_show_cursor(Focus::LoginField),
         });
 
@@ -282,7 +246,11 @@ impl UIRender<()> for RegisterPage {
         self.confirm_login_field.render(frame, text_input::RenderProperties {
             title: String::from("Confirm Login"),
             area: confirm_login_field_area,
-            border_color: self.calculate_border_color(Focus::ConfirmLoginField),
+            border_color: utils::calculate_border_color(
+                self.active_section,
+                self.last_hovered_section,
+                Focus::ConfirmLoginField
+            ),
             show_cursor: self.calculate_show_cursor(Focus::ConfirmLoginField),
         });
 
@@ -292,7 +260,11 @@ impl UIRender<()> for RegisterPage {
         self.password_field.render(frame, text_input::RenderProperties {
             title: String::from("Password"),
             area: password_field_area,
-            border_color: self.calculate_border_color(Focus::PasswordField),
+            border_color: utils::calculate_border_color(
+                self.active_section,
+                self.last_hovered_section,
+                Focus::PasswordField
+            ),
             show_cursor: self.calculate_show_cursor(Focus::PasswordField),
         });
 
@@ -302,7 +274,11 @@ impl UIRender<()> for RegisterPage {
         self.confirm_password_field.render(frame, text_input::RenderProperties {
             title: String::from("Confirm Password"),
             area: confirm_password_field_area,
-            border_color: self.calculate_border_color(Focus::ConfirmPasswordField),
+            border_color: utils::calculate_border_color(
+                self.active_section,
+                self.last_hovered_section,
+                Focus::ConfirmPasswordField
+            ),
             show_cursor: self.calculate_show_cursor(Focus::ConfirmPasswordField),
         });
 
@@ -317,7 +293,11 @@ impl UIRender<()> for RegisterPage {
         // RENDER BACK BUTTON
         self.back_button.render(frame, button::RenderProperties {
             // label: String::from("Back"),
-            border_color: self.calculate_border_color(Focus::BackButton),
+            border_color: utils::calculate_border_color(
+                self.active_section,
+                self.last_hovered_section,
+                Focus::BackButton
+            ),
             area: back_button_area,
         });
 
@@ -326,7 +306,11 @@ impl UIRender<()> for RegisterPage {
         // RENDER REGISTER BUTTON
         self.register_button.render(frame, button::RenderProperties {
             // label: String::from("Register"),
-            border_color: self.calculate_border_color(Focus::RegisterButton),
+            border_color: utils::calculate_border_color(
+                self.active_section,
+                self.last_hovered_section,
+                Focus::RegisterButton
+            ),
             area: register_button_area,
         });
     }

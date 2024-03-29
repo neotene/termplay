@@ -1,4 +1,5 @@
 use crossterm::event::KeyEventKind;
+use num_derive::FromPrimitive;
 use ratatui::{
     layout::{ Alignment, Constraint, Direction, Layout },
     style::{ Color, Style },
@@ -8,35 +9,12 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use crate::store::{ action::Action, state::State };
 
-use super::{ button::{ self, Button }, ui_object::{ UIObject, UIRender } };
+use super::{ button::{ self, Button }, ui_object::{ UIObject, UIRender }, utils };
 
-#[derive(Clone, PartialEq)]
+#[derive(FromPrimitive, ToPrimitive, Eq, PartialEq, Clone, Copy)]
 pub enum Focus {
     YesButton,
     NoButton,
-}
-
-impl Focus {
-    pub const COUNT: usize = 2;
-
-    fn to_usize(&self) -> usize {
-        match self {
-            Focus::YesButton => 0,
-            Focus::NoButton => 1,
-        }
-    }
-}
-
-impl TryFrom<usize> for Focus {
-    type Error = ();
-
-    fn try_from(value: usize) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Focus::YesButton),
-            1 => Ok(Focus::NoButton),
-            _ => Err(()),
-        }
-    }
 }
 
 const DEFAULT_HOVERED_SECTION: Focus = Focus::NoButton;
@@ -48,28 +26,6 @@ pub struct ExitModal {
     no_button: Button,
     last_hovered_section: Focus,
     active_section: Option<Focus>,
-}
-
-impl ExitModal {
-    fn hover_next(&mut self) {
-        let idx: usize = self.last_hovered_section.to_usize();
-        let next_idx = (idx + 1) % Focus::COUNT;
-        self.last_hovered_section = Focus::try_from(next_idx).unwrap();
-    }
-
-    fn hover_previous(&mut self) {
-        let idx: usize = self.last_hovered_section.to_usize();
-        let previous_idx = if idx == 0 { Focus::COUNT - 1 } else { idx - 1 };
-        self.last_hovered_section = Focus::try_from(previous_idx).unwrap();
-    }
-
-    fn calculate_border_color(&self, section: Focus) -> Color {
-        match (self.active_section.as_ref(), &self.last_hovered_section) {
-            (Some(active_section), _) if active_section.eq(&section) => Color::Yellow,
-            (_, last_hovered_section) if last_hovered_section.eq(&section) => Color::Blue,
-            _ => Color::Reset,
-        }
-    }
 }
 
 impl UIObject<()> for ExitModal {
@@ -105,10 +61,20 @@ impl UIObject<()> for ExitModal {
                         self.action_sender.send(Action::CancelExit).unwrap();
                     }
                     crossterm::event::KeyCode::Tab => {
-                        self.hover_next();
+                        self.last_hovered_section = utils::cycle(
+                            Focus::YesButton,
+                            Focus::NoButton,
+                            self.last_hovered_section,
+                            1
+                        );
                     }
                     crossterm::event::KeyCode::BackTab => {
-                        self.hover_previous();
+                        self.last_hovered_section = utils::cycle(
+                            Focus::YesButton,
+                            Focus::NoButton,
+                            self.last_hovered_section,
+                            -1
+                        );
                     }
                     _ => {
                         let active_section = self.active_section
@@ -121,6 +87,7 @@ impl UIObject<()> for ExitModal {
                             Focus::NoButton => {
                                 self.no_button.handle_key_event(event);
                             }
+                            _ => {}
                         }
                     }
                 }
@@ -181,8 +148,16 @@ impl UIRender<()> for ExitModal {
         let yes_button_area = button_areas[0];
         let no_button_area = button_areas[1];
 
-        let yes_button_border_color = self.calculate_border_color(Focus::YesButton);
-        let no_button_border_color = self.calculate_border_color(Focus::NoButton);
+        let yes_button_border_color = utils::calculate_border_color(
+            self.active_section,
+            self.last_hovered_section,
+            Focus::YesButton
+        );
+        let no_button_border_color = utils::calculate_border_color(
+            self.active_section,
+            self.last_hovered_section,
+            Focus::NoButton
+        );
 
         self.yes_button.render(frame, button::RenderProperties {
             border_color: yes_button_border_color,
