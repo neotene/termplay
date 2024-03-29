@@ -73,7 +73,7 @@ impl UIObject<()> for Application {
 }
 
 impl UIRender<()> for Application {
-    fn render<B: Backend>(&self, frame: &mut Frame<B>, properties: ()) {
+    fn render(&self, frame: &mut Frame, properties: ()) {
         match self.active_page {
             ActivePage::LoginPage => self.login_page.render(frame, properties),
             ActivePage::RegisterPage => self.register_page.render(frame, properties),

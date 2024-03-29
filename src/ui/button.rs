@@ -61,7 +61,7 @@ pub struct RenderProperties {
 }
 
 impl UIRender<RenderProperties> for Button {
-    fn render<B: Backend>(&self, frame: &mut Frame<B>, properties: RenderProperties) {
+    fn render(&self, frame: &mut Frame, properties: RenderProperties) {
         let style = Style::default().fg(properties.border_color);
         let paragraph = Paragraph::new(self.label.clone())
             .style(style)

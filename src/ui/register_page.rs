@@ -168,7 +168,7 @@ impl UIObject<()> for RegisterPage {
 }
 
 impl UIRender<()> for RegisterPage {
-    fn render<B: Backend>(&self, frame: &mut Frame<B>, _properties: ()) {
+    fn render(&self, frame: &mut Frame, _properties: ()) {
         let page_block = Block::default()
             .title("Termplay")
             .title_alignment(Alignment::Center)

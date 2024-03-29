@@ -15,5 +15,5 @@ pub trait UIObject<InitProperties> {
 }
 
 pub trait UIRender<Properties> {
-    fn render<B: Backend>(&self, frame: &mut Frame<B>, properties: Properties);
+    fn render(&self, frame: &mut Frame, properties: Properties);
 }

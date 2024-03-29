@@ -97,11 +97,7 @@ impl UIObject<()> for ExitModal {
 }
 
 impl UIRender<()> for ExitModal {
-    fn render<B: ratatui::prelude::Backend>(
-        &self,
-        frame: &mut ratatui::prelude::Frame<B>,
-        _properties: ()
-    ) {
+    fn render(&self, frame: &mut ratatui::prelude::Frame, _properties: ()) {
         let areas_vert_3 = Layout::default()
             .direction(Direction::Vertical)
             .constraints([

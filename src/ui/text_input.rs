@@ -119,7 +119,7 @@ pub struct RenderProperties {
 }
 
 impl UIRender<RenderProperties> for TextInput {
-    fn render<B: Backend>(&self, frame: &mut Frame<B>, properties: RenderProperties) {
+    fn render(&self, frame: &mut Frame, properties: RenderProperties) {
         let text_to_render: String;
         if self.is_password {
             text_to_render = "*".repeat(self.text.len());
