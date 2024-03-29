@@ -87,7 +87,6 @@ impl UIObject<()> for ExitModal {
                             Focus::NoButton => {
                                 self.no_button.handle_key_event(event);
                             }
-                            _ => {}
                         }
                     }
                 }
