@@ -1,75 +1,62 @@
-use std::{ pin::Pin, time::Duration };
+use native_tls::TlsConnector;
+use tokio::sync::{ broadcast, mpsc };
+use tokio_native_tls::native_tls;
+use std::error::Error;
+use std::net::ToSocketAddrs;
+use std::pin::Pin;
+use std::time::Duration;
+use tokio::io::{ AsyncRead, AsyncReadExt, AsyncWriteExt, ReadBuf };
+use tokio::net::TcpStream;
 
-use anyhow::Context;
-use tokio::{
-    io::{ AsyncBufReadExt, AsyncWriteExt, BufReader },
-    net::{ tcp::OwnedWriteHalf, TcpStream },
-    sync::{ broadcast, mpsc },
-};
+use crate::termination::{ Interrupted, Terminator };
 
-use state::State;
+use super::action::Action;
+use super::command;
+use super::state::State;
 
-use crate::{ store::state::ConnectionStatus, termination::{ Interrupted, Terminator } };
-
-use super::{ action::Action, command, event, state };
+pub type SSLStream = tokio_native_tls::TlsStream<TcpStream>;
 
 pub struct Store {
     state_sender: mpsc::UnboundedSender<State>,
 }
 
-use tokio_stream::{ wrappers::LinesStream, Stream };
-
-use tokio_openssl::SslStream;
-
-pub type BoxedStream<Item> = Pin<Box<dyn Stream<Item = Item> + Send>>;
-
-pub type EventStream = BoxedStream<anyhow::Result<event::Event>>;
-
 pub struct CommandWriter {
-    writer: OwnedWriteHalf,
+    socket: SSLStream,
 }
 
 pub const NEW_LINE: &[u8; 2] = b"\r\n";
 
 impl CommandWriter {
-    pub fn new(writer: OwnedWriteHalf) -> Self {
-        Self { writer }
+    pub fn new(writer: SSLStream) -> Self {
+        Self { socket: writer }
     }
 
     pub async fn write(&mut self, command: &command::UserCommand) -> anyhow::Result<()> {
         let mut serialized_bytes = serde_json::to_vec(command)?;
         serialized_bytes.extend_from_slice(NEW_LINE);
 
-        self.writer.write_all(serialized_bytes.as_slice()).await?;
+        self.socket.write_all(serialized_bytes.as_slice()).await?;
 
         Ok(())
     }
 }
 
-pub fn split_tcp_stream(stream: TcpStream) -> (EventStream, CommandWriter) {
-    let (reader, writer) = stream.into_split();
+type ServerHandle = Pin<Box<SSLStream>>;
 
-    (
-        Box::pin(
-            LinesStream::new(BufReader::new(reader).lines()).map(|line| {
-                line.context("could not read line from the server").and_then(|line| {
-                    serde_json
-                        ::from_str::<event::Event>(&line)
-                        .context("failed to deserialize event from the server")
-                })
-            })
-        ),
-        CommandWriter::new(writer),
-    )
-}
+// pub type BoxedStream<Item> = Pin<Box<dyn SSLStream<Item = Item> + Send>>;
 
-type ServerHandle = (EventStream, CommandWriter);
+// pub type EventStream = BoxedStream<anyhow::Result<event::Event>>;
 
-async fn create_server_handle(addr: &str) -> anyhow::Result<ServerHandle> {
-    let stream = TcpStream::connect(addr).await?;
-    let (event_stream, command_writer) = split_tcp_stream(stream);
+async fn create_server_handle() -> anyhow::Result<ServerHandle> {
+    let addr = "termplay.xyz:443".to_socket_addrs()?.next().unwrap();
 
-    Ok((event_stream, command_writer))
+    let socket = TcpStream::connect(&addr).await?;
+    let cx = TlsConnector::builder().build()?;
+    let cx = tokio_native_tls::TlsConnector::from(cx);
+
+    let socket = cx.connect("termplay.xyz", socket).await?;
+
+    Ok(Pin::new(Box::new(socket)))
 }
 
 impl Store {
@@ -94,22 +81,11 @@ impl Store {
         let mut opt_server_handle: Option<ServerHandle> = None;
 
         let result = loop {
-            if let Some((event_stream, command_writer)) = opt_server_handle.as_mut() {
-                tokio::select! {
-                maybe_event = event_stream.next() => match maybe_event {
-                    Some(Ok(event)) => {
-                        state.handle_server_event(&event);
-                    },
-                    // server disconnected, we need to reset the state
-                    None => {
-                        opt_server_handle = None;
-                        state = State::default();
-                    },
-                    _ => (),
-                },
-            }
-            } else {
-                tokio::select! {
+            let mut socket = opt_server_handle.unwrap();
+            let buffer = vec![0; 1024];
+            SSLStream::poll_read(socket.as_mut(, ));
+            // socket.
+            tokio::select! {
                     Some(action) = action_receiver.recv() => match action {
                         Action::None => {
                         },
@@ -120,22 +96,7 @@ impl Store {
                             self.state_sender.send(state.clone())?;
                         },
                         Action::Register => {
-                            state.connection_status = ConnectionStatus::Connecting;
-                            // emit event to re-render any part depending on the connection status
-                            self.state_sender.send(state.clone())?;
 
-                            match create_server_handle("termplay.xyz").await {
-                                Ok(server_handle) => {
-                                    // set the server handle and change status for further processing
-                                    let _ = opt_server_handle.insert(server_handle);
-                                    state.connection_status = ConnectionStatus::Connected;
-                                    // ticker needs to be resetted to avoid showing time spent inputting and connecting to the server address
-                                    // ticker.reset();
-                                },
-                                Err(err) => {
-                                    state.connection_status = ConnectionStatus::Errored {message: err.to_string()};
-                                }
-                            }
                         },
                         Action::PreExit => {
                             state.show_exit_confirmation = true;
@@ -150,8 +111,10 @@ impl Store {
                             break Interrupted::UserInt;
                         },
                     }
+                    _ = _ticker.tick() => {
+                        // do something
+                    };
                 }
-            }
         };
         Ok(result)
     }
