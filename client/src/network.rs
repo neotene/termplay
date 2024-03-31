@@ -28,13 +28,13 @@ type ServerHandle = Pin<Box<SSLStream>>;
 // }
 
 pub async fn create_server_handle() -> anyhow::Result<ServerHandle> {
-    let addr = "termplay.xyz:443".to_socket_addrs()?.next().unwrap();
+    let addr = "localhost:8080".to_socket_addrs()?.next().unwrap();
 
     let socket = TcpStream::connect(&addr).await?;
     let cx = TlsConnector::builder().build()?;
     let cx = tokio_native_tls::TlsConnector::from(cx);
 
-    let socket = cx.connect("termplay.xyz", socket).await?;
+    let socket = cx.connect("localhost", socket).await?;
 
     Ok(Pin::new(Box::new(socket)))
 }
