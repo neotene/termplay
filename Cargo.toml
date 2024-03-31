@@ -1,21 +1,6 @@
-[package]
-name = "termplay"
-version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-anyhow = "1.0.75"
-bytes = "1.6.0"
-circular-queue = "0.2.6"
-crossterm = { version = "0.27.0", features = ["event-stream"] }
-num-derive = "0.4"
-num-traits = "0.2"
-rand = "0.8.5"
-ratatui = { version = "0.26.1", features = ["all-widgets"] }
-serde = { version = "1.0.125", features = ["derive"] }
-serde_json = "1.0.105"
-tokio = { version = "1.37.0", features = ["full"] }
-tokio-native-tls = "0.3.1"
-tokio-stream = { version = "0.1.14", default-features = false, features = ["io-util"] }
+[workspace]
+resolver = "2"
+members = [
+  "client",
+  "register_server"
+]
