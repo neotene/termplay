@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
 use ratatui::{
-    backend::Backend,
     layout::{ self, Alignment, Constraint, Direction, Layout },
     style::{ Color, Style },
     widgets::{ Block, Borders },

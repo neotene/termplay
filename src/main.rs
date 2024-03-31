@@ -1,17 +1,15 @@
-use core::net;
-
-use store::{ action::{ self, Action }, state::State, store::Store };
+use store::store::Store;
 use termination::create_termination;
-use tokio::sync::mpsc;
+
 use ui::ui::UI;
 
 mod store;
 mod termination;
 mod ui;
-mod network;
+// mod network;
 use termination::Interrupted;
 
-use network::do_loop;
+// use network::do_loop;
 
 #[macro_use]
 extern crate num_derive;
@@ -22,8 +20,8 @@ async fn main() -> anyhow::Result<()> {
     let (ui, action_receiver) = UI::new();
     tokio::try_join!(
         store.do_loop(terminator, action_receiver, interrupt_receiver.resubscribe()),
-        ui.do_loop(state_receiver, interrupt_receiver.resubscribe()),
-        network::do_loop(state_receiver, interrupt_receiver.resubscribe(), action_receiver)
+        ui.do_loop(state_receiver, interrupt_receiver.resubscribe())
+        // network::do_loop(state_receiver, interrupt_receiver.resubscribe(), action_receiver)
     )?;
 
     if let Ok(reason) = interrupt_receiver.recv().await {

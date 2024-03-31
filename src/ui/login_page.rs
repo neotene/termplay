@@ -1,5 +1,4 @@
 use crossterm::event::KeyEventKind;
-use ratatui::backend::Backend;
 use ratatui::layout::{ self, Alignment, Constraint, Direction, Layout };
 use ratatui::style::{ Color, Style };
 use ratatui::widgets::{ Block, Borders };

@@ -1,14 +1,12 @@
-use super::event;
-
 #[derive(Default, Clone)]
 pub enum ConnectionStatus {
     #[default]
     Idle,
-    Connecting,
-    Connected,
-    Errored {
-        message: String,
-    },
+    // Connecting,
+    // Connected,
+    // Errored {
+    //     message: String,
+    // },
 }
 
 #[derive(Default, Clone)]
@@ -26,16 +24,16 @@ pub struct State {
     pub connection_status: ConnectionStatus,
 }
 
-impl State {
-    pub fn handle_server_event(&mut self, event: &event::Event) {
-        match event {
-            event::Event::RegisterResponse(event::RegisterResponseEvent { success, message }) => {
-                self.connection_status = ConnectionStatus::Idle;
-                self.error_message = message.clone();
-                if *success {
-                    self.is_registering = false;
-                }
-            }
-        }
-    }
-}
+// impl State {
+//     pub fn handle_server_event(&mut self, event: &event::Event) {
+//         match event {
+//             event::Event::RegisterResponse(event::RegisterResponseEvent { success, message }) => {
+//                 self.connection_status = ConnectionStatus::Idle;
+//                 self.error_message = message.clone();
+//                 if *success {
+//                     self.is_registering = false;
+//                 }
+//             }
+//         }
+//     }
+// }

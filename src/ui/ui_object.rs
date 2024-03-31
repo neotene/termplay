@@ -1,4 +1,4 @@
-use ratatui::{ backend::Backend, Frame };
+use ratatui::Frame;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::store::{ action::Action, state::State };

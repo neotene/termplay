@@ -1,5 +1,4 @@
 use ratatui::{
-    backend::Backend,
     layout::{ Alignment, Rect },
     style::{ Color, Style },
     widgets::{ Block, Borders, Paragraph },
