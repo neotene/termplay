@@ -8,28 +8,10 @@ use ui::ui::UI;
 mod store;
 mod termination;
 mod ui;
-
+mod network;
 use termination::Interrupted;
 
-struct Network {
-    action_sender: mpsc::UnboundedSender<Action>,
-    state_sender: mpsc::UnboundedSender<State>,
-    terminator: mpsc::UnboundedSender<Interrupted>,
-}
-
-impl Network {
-    fn new(
-        action_sender: mpsc::UnboundedSender<Action>,
-        state_sender: mpsc::UnboundedSender<State>,
-        terminator: mpsc::UnboundedSender<Interrupted>
-    ) -> Self {
-        Self { action_sender, state_sender, terminator }
-    }
-
-    async fn do_loop(self) -> anyhow::Result<()> {
-        Ok(())
-    }
-}
+use network::do_loop;
 
 #[macro_use]
 extern crate num_derive;
@@ -38,11 +20,10 @@ async fn main() -> anyhow::Result<()> {
     let (terminator, mut interrupt_receiver) = create_termination();
     let (store, state_receiver) = Store::new();
     let (ui, action_receiver) = UI::new();
-    let network = Network::new(action_receiver. , state_receiver, terminator.clone());
     tokio::try_join!(
         store.do_loop(terminator, action_receiver, interrupt_receiver.resubscribe()),
-        ui.do_loop(state_receiver, interrupt_receiver.resubscribe())
-        network.do_loop(state_receiver, interrupt_receiver.resubscribe()),
+        ui.do_loop(state_receiver, interrupt_receiver.resubscribe()),
+        network::do_loop(state_receiver, interrupt_receiver.resubscribe(), action_receiver)
     )?;
 
     if let Ok(reason) = interrupt_receiver.recv().await {
