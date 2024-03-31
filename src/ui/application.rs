@@ -1,4 +1,9 @@
-use ratatui::Frame;
+use ratatui::{
+    layout::{ Alignment, Layout },
+    style::{ Color, Style },
+    widgets::{ Block, Borders, Paragraph },
+    Frame,
+};
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::store::{ action::Action, state::State };
@@ -22,6 +27,7 @@ pub struct Application {
     active_page: ActivePage,
     action_sender: UnboundedSender<Action>,
     show_exit_modal: bool,
+    error_message: String,
 }
 
 impl UIObject<()> for Application {
@@ -33,6 +39,7 @@ impl UIObject<()> for Application {
             active_page: ActivePage::LoginPage,
             action_sender,
             show_exit_modal: false,
+            error_message: String::new(),
         }
     }
 
@@ -47,6 +54,7 @@ impl UIObject<()> for Application {
             action_sender: self.action_sender,
             exit_modal: self.exit_modal.move_with_state(state),
             show_exit_modal: state.show_exit_confirmation,
+            error_message: state.error_message.clone(),
         }
     }
 
@@ -74,11 +82,52 @@ impl UIObject<()> for Application {
 
 impl UIRender<()> for Application {
     fn render(&self, frame: &mut Frame, properties: ()) {
+        // PAGE BLOCK
+        let page_block = Block::default()
+            .title("Termplay")
+            .title_alignment(Alignment::Center)
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::White))
+            .style(Style::default().bg(Color::Black));
+
+        frame.render_widget(page_block, frame.size());
+
+        // ERROR MESSAGE
+        let error_message = Paragraph::new(self.error_message.as_str())
+            .style(Style::default().fg(Color::Red))
+            .alignment(Alignment::Center);
+
+        let areas_for_error_message = Layout::default()
+            .direction(ratatui::layout::Direction::Vertical)
+            .constraints(
+                [
+                    ratatui::layout::Constraint::Percentage(10),
+                    ratatui::layout::Constraint::Percentage(10),
+                    ratatui::layout::Constraint::Percentage(10),
+                    ratatui::layout::Constraint::Percentage(10),
+                    ratatui::layout::Constraint::Percentage(10),
+                    ratatui::layout::Constraint::Percentage(10),
+                    ratatui::layout::Constraint::Percentage(10),
+                    ratatui::layout::Constraint::Percentage(10),
+                    ratatui::layout::Constraint::Percentage(10),
+                    ratatui::layout::Constraint::Percentage(10),
+                ].as_ref()
+            )
+            .split(frame.size());
+
+        let mut error_message_area = areas_for_error_message[9];
+        error_message_area.width -= 2;
+        error_message_area.height -= 2;
+        error_message_area.x += 1;
+        frame.render_widget(error_message, error_message_area);
+
+        // CURRENT PAGE
         match self.active_page {
             ActivePage::LoginPage => self.login_page.render(frame, properties),
             ActivePage::RegisterPage => self.register_page.render(frame, properties),
         }
 
+        // EXIT MODAL
         if self.show_exit_modal {
             self.exit_modal.render(frame, properties);
         }

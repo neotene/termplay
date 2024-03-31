@@ -6,7 +6,7 @@ use ui::ui::UI;
 mod store;
 mod termination;
 mod ui;
-// mod network;
+mod network;
 use termination::Interrupted;
 
 // use network::do_loop;

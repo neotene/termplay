@@ -1,16 +1,8 @@
-use std::time::Duration;
-use tokio::io::{ AsyncRead, AsyncReadExt, AsyncWriteExt, ReadBuf };
 use tokio::net::TcpStream;
 
-use tokio::sync::{ broadcast, mpsc };
-use tokio_native_tls::native_tls::{ self, TlsConnector };
-use std::error::Error;
+use tokio_native_tls::native_tls::TlsConnector;
 use std::net::ToSocketAddrs;
 use std::pin::Pin;
-
-use crate::store::action::Action;
-use crate::store::state::State;
-use crate::termination::Interrupted;
 
 pub type SSLStream = tokio_native_tls::TlsStream<TcpStream>;
 
@@ -35,15 +27,7 @@ type ServerHandle = Pin<Box<SSLStream>>;
 //     }
 // }
 
-pub async fn do_loop(
-    action_receiver: mpsc::UnboundedReceiver<Action>,
-    state_receiver: mpsc::UnboundedReceiver<State>,
-    interrupt_receiver: broadcast::Receiver<Interrupted>
-) -> anyhow::Result<()> {
-    Ok(())
-}
-
-async fn create_server_handle() -> anyhow::Result<ServerHandle> {
+pub async fn create_server_handle() -> anyhow::Result<ServerHandle> {
     let addr = "termplay.xyz:443".to_socket_addrs()?.next().unwrap();
 
     let socket = TcpStream::connect(&addr).await?;

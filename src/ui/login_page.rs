@@ -142,16 +142,6 @@ impl UIObject<()> for LoginPage {
 
 impl UIRender<()> for LoginPage {
     fn render(&self, frame: &mut Frame, _properties: ()) {
-        let page_block = Block::default()
-            .title("Termplay")
-            .title_alignment(Alignment::Center)
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(Color::White))
-            .style(Style::default().bg(Color::Black));
-
-        // RENDER PAGE BLOCK
-        frame.render_widget(page_block, frame.size());
-
         let areas_vert_3 = Layout::default()
             .direction(layout::Direction::Vertical)
             .constraints([

@@ -7,6 +7,7 @@ use tokio::sync::{ broadcast, mpsc };
 
 use std::pin::Pin;
 
+use crate::network;
 use crate::termination::{ Interrupted, Terminator };
 
 use super::action::Action;
@@ -74,7 +75,14 @@ impl Store {
                             self.state_sender.send(state.clone())?;
                         },
                         Action::Register => {
-
+                            match network::create_server_handle().await {
+                                Ok(server_handle) => {
+                                    opt_server_handle = Some(server_handle);
+                                },
+                                Err(e) => {
+                                    state.error_message = e.to_string();
+                                }
+                            }
                         },
                         Action::PreExit => {
                             state.show_exit_confirmation = true;
