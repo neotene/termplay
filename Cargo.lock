@@ -1088,6 +1088,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "termplay-client-cli"
+version = "0.1.0"
+dependencies = [
+ "rustls",
+ "tokio",
+ "tokio-native-tls",
+ "tokio-stream",
+]
+
+[[package]]
+name = "termplay-register-server"
+version = "0.1.0"
+dependencies = [
+ "rustls",
+ "tokio",
+ "tokio-native-tls",
+ "tokio-stream",
+]
+
+[[package]]
 name = "termplay_client"
 version = "0.1.0"
 dependencies = [
@@ -1100,16 +1120,6 @@ dependencies = [
  "ratatui",
  "serde",
  "serde_json",
- "tokio",
- "tokio-native-tls",
- "tokio-stream",
-]
-
-[[package]]
-name = "termplay_register_server"
-version = "0.1.0"
-dependencies = [
- "rustls",
  "tokio",
  "tokio-native-tls",
  "tokio-stream",
