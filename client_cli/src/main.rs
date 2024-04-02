@@ -18,6 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Configuration du connecteur TLS avec le certificat du serveur");
     let mut tls_connector = NativeTlsConnector::builder();
     tls_connector.add_root_certificate(cert);
+    tls_connector.danger_accept_invalid_certs(true);
 
     // Connectez-vous au serveur avec SSL
     println!("Connexion au serveur avec SSL");

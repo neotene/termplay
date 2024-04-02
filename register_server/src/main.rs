@@ -31,6 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Créer un accepteur TLS
     println!("Création de l'accepteur TLS");
     let acceptor = {
+        Identity::from;
         let identity = Identity::from_pkcs12(&cert_buffer, "")?;
         let builder = native_tls::TlsAcceptor::new(identity)?;
         TlsAcceptor::from(builder)
