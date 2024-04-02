@@ -86,6 +86,13 @@ fn send_email_configured(
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Load the INI file
+    let mut ini_reader = Ini::new();
+
+    // Read the INI file
+    let conf = ini_reader.load("../config.ini")?;
+
+    // Read the SMTP server configuration from the INI file
     // Charger le certificat et la clé privée TLS
     println!("Chargement du certificat");
     let mut cert_file = File::open("../keyStore.p12")?;
