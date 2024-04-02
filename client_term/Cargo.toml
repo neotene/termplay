@@ -1,5 +1,5 @@
 [package]
-name = "termplay_client"
+name = "termplay-client"
 version = "0.1.0"
 edition = "2021"
 
