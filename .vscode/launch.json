@@ -7,39 +7,56 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'termplay'",
+            "name": "termplay-register-server",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=termplay",
-                    "--package=termplay"
+                    "--bin=termplay-register-server",
+                    "--package=termplay-register-server"
                 ],
                 "filter": {
-                    "name": "termplay",
+                    "name": "termplay-register-server",
+                    "kind": "bin"
+                }
+            },
+            "args": ["../termplay.ini", "localhost:8080"],
+            "cwd": "${workspaceFolder}",
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "termplay-client-cli",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=termplay-client-cli",
+                    "--package=termplay-client-cli"
+                ],
+                "filter": {
+                    "name": "termplay-client-cli",
                     "kind": "bin"
                 }
             },
             "args": [],
             "cwd": "${workspaceFolder}",
         },
-        {
+                {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'termplay'",
+            "name": "termplay-client-term",
             "cargo": {
                 "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=termplay",
-                    "--package=termplay"
+                    "build",
+                    "--bin=termplay-client-term",
+                    "--package=termplay-client-term"
                 ],
                 "filter": {
-                    "name": "termplay",
+                    "name": "termplay-client-term",
                     "kind": "bin"
                 }
             },
             "args": [],
-            "cwd": "${workspaceFolder}"
-        }
+            "cwd": "${workspaceFolder}",
+        },
     ]
 }

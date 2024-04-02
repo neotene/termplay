@@ -2,6 +2,7 @@ use ini::configparser::ini::Ini;
 use tokio::io::AsyncReadExt;
 use tokio::net::{ TcpListener, TcpStream };
 use tokio_native_tls::{ native_tls, TlsAcceptor };
+use std::env;
 use std::fs::File;
 use std::io::{ self, Read };
 
@@ -52,53 +53,55 @@ fn send_email_configured(
     body: String
 ) -> Result<(), Box<dyn Error>> {
     // Load the INI file
-    let mut ini_reader = Ini::new();
+    let conf = ini!(conf_path);
 
-    // Read the INI file
-    let conf = ini_reader.load(conf_path)?;
+    // Read the SMTP server configuration from the INI file
+    let smtp_server = conf["smtp"]["server"].clone().unwrap();
+    let smtp_port = conf["smtp"]["port"].clone().unwrap().parse::<u16>()?;
+    let username = conf["smtp"]["username"].clone().unwrap();
+    let password = conf["smtp"]["password"].clone().unwrap();
 
-    // // Read the SMTP server configuration from the INI file
-    // let smtp_server = conf.get_from(Some("smtp"), "server").unwrap_or("localhost".to_string());
-    // let smtp_port = conf.get_from(Some("smtp"), "port").unwrap_or(25);
+    // Create the email message
+    let email = Message::builder()
+        .from(sender.parse()?)
+        .to(recipient.parse()?)
+        .subject(subject)
+        .body(body)?;
 
-    // // Read the authentication credentials from the INI file
-    // let username = conf.get_from(Some("smtp"), "username").unwrap_or("".to_string());
-    // let password = conf.get_from(Some("smtp"), "password").unwrap_or("".to_string());
+    // Create the SMTP transport with the configured server and credentials
+    let mailer = SmtpTransport::relay(smtp_server.as_str())?
+        .credentials(Credentials::new(username, password))
+        .port(smtp_port)
+        .build();
 
-    // // Create the email message
-    // let email = Message::builder()
-    //     .from(sender.parse()?)
-    //     .to(recipient.parse()?)
-    //     .subject(subject)
-    //     .body(body)?;
-
-    // // Create the SMTP transport with the configured server and credentials
-    // let mailer = SmtpTransport::relay(smtp_server.as_str())?
-    //     .credentials(Credentials::new(username, password))
-    //     .port(smtp_port)
-    //     .build();
-
-    // // Send the email
-    // mailer.send(&email)?;
+    // Send the email
+    mailer.send(&email)?;
 
     Ok(())
 }
 
+#[macro_use]
+extern crate ini;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Load the INI file
-    let mut ini_reader = Ini::new();
+    if env::args().len() < 3 {
+        eprintln!("Usage: {} <config file path> <bind host>", env::args().next().unwrap());
+        std::process::exit(1);
+    }
 
     // Read the INI file
-    let conf = ini_reader.load("../config.ini")?;
+    let conf_file_path = env::args().nth(1).unwrap();
+    let conf = ini!(conf_file_path.as_str());
 
+    let cert_file_path = conf["ssl"]["cert file path"].clone().unwrap();
+    let key_file_path = conf["ssl"]["key file path"].clone().unwrap();
     // Read the SMTP server configuration from the INI file
     // Charger le certificat et la clé privée TLS
     println!("Chargement du certificat");
-    let mut cert_file = File::open("../keyStore.p12")?;
+    let mut cert_file = File::open(cert_file_path)?;
 
     println!("Chargement de la clé privée");
-    let mut key_file = File::open("../myKey.pem")?;
+    let mut key_file = File::open(key_file_path)?;
 
     let mut cert_buffer = Vec::new();
     let mut key_buffer = Vec::new();
@@ -123,7 +126,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Démarrage du serveur");
     // Créer un écouteur TCP
-    let addr = "termplay.xyz:8080";
+    let addr = env::args().nth(2).unwrap();
     let listener = TcpListener::bind(&addr).await?;
     println!("Serveur démarré et en écoute sur le port 8080...");
 
@@ -134,11 +137,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let acceptor = acceptor.clone();
 
         // Gérer chaque connexion dans un thread séparé
-        tokio::spawn(async move {
-            if let Err(e) = handle_connection(socket, acceptor).await {
-                eprintln!("Erreur lors de la gestion de la connexion : {}", e);
-            }
-        });
+        // tokio::spawn(async move {
+        if let Err(e) = handle_connection(socket, acceptor).await {
+            eprintln!("Erreur lors de la gestion de la connexion : {}", e);
+        }
+        // });
     }
 }
 
@@ -148,6 +151,7 @@ async fn handle_connection(socket: TcpStream, acceptor: TlsAcceptor) -> Result<(
     let mut tls_stream = acceptor.accept(socket).await.ok().unwrap();
 
     // Lire les données TLS
+    println!("Lecture des données TLS");
     let mut buffer = [0; 1024];
     let resp = tls_stream.read(&mut buffer).await?;
     println!("Données reçues : {:?}", &buffer[..resp]);
