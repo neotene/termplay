@@ -1,0 +1,8 @@
+[SMTP]
+server = 
+login = 
+password = 
+
+[SSL]
+key file path = 
+cert file path = 
