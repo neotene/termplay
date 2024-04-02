@@ -116,7 +116,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Démarrage du serveur");
     // Créer un écouteur TCP
-    let addr = "localhost:8080";
+    let addr = "termplay.xyz:8080";
     let listener = TcpListener::bind(&addr).await?;
     println!("Serveur démarré et en écoute sur le port 8080...");
 
