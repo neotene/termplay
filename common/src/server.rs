@@ -26,7 +26,7 @@ impl CommandManager {
     /// branch completes first, then the provided [crate::command::UserCommand] may have been
     /// partially written, but future calls to `write` will start over
     /// from the beginning of the buffer. Causing undefined behaviour.
-    pub async fn send(&mut self, command: &command::UserCommand) -> anyhow::Result<()> {
+    pub async fn send(&mut self, command: &command::ServerCommand) -> anyhow::Result<()> {
         let mut serialized_bytes = serde_json::to_vec(command)?;
         serialized_bytes.extend_from_slice(NEW_LINE);
         self.buf_stream.write(&serialized_bytes).await?;
@@ -34,7 +34,7 @@ impl CommandManager {
         Ok(())
     }
 
-    pub async fn receive<T>(&mut self) -> anyhow::Result<command::ServerCommand> {
+    pub async fn receive<T>(&mut self) -> anyhow::Result<command::UserCommand> {
         let mut buffer: Vec<u8> = Vec::new();
         self.buf_stream.read_until(b'\n', &mut buffer).await?;
         let str = std::str::from_utf8(&buffer)?;

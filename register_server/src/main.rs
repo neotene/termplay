@@ -1,12 +1,11 @@
-use common::client::CommandManager;
-use common::command::RegisterCommand;
-use ini::configparser::ini::Ini;
-use tokio::io::AsyncReadExt;
+use common::server::CommandManager;
+use common::command::{ RegisterCommand, RegisterResponseCommand, ServerCommand, UserCommand };
+
 use tokio::net::{ TcpListener, TcpStream };
 use tokio_native_tls::{ native_tls, TlsAcceptor };
 use std::env;
 use std::fs::File;
-use std::io::{ self, Read };
+use std::io::Read;
 
 use native_tls::Identity;
 
@@ -15,7 +14,7 @@ use lettre::transport::smtp::authentication::Credentials;
 use std::error::Error;
 
 // Fonction pour envoyer un e-mail
-fn send_email(
+fn _send_email(
     smtp_server: String,
     smtp_port: u16,
     username: String,
@@ -47,7 +46,7 @@ fn send_email(
     Ok(())
 }
 
-fn send_email_configured(
+fn _send_email_configured(
     conf_path: &str,
     sender: String,
     recipient: String,
@@ -91,24 +90,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(1);
     }
 
-    // Read the INI file
     let conf_file_path = env::args().nth(1).unwrap();
     let conf = ini!(conf_file_path.as_str());
 
     let cert_file_path = conf["ssl"]["cert file path"].clone().unwrap();
     let key_file_path = conf["ssl"]["key file path"].clone().unwrap();
-    // Read the SMTP server configuration from the INI file
-    // Charger le certificat et la clé privée TLS
-    println!("Chargement du certificat");
-    let mut cert_file = File::open(cert_file_path)?;
 
-    println!("Chargement de la clé privée");
+    println!("Loading cerfiticate and private key files");
+    let mut cert_file = File::open(cert_file_path)?;
     let mut key_file = File::open(key_file_path)?;
 
-    let mut cert_buffer = Vec::new();
     let mut key_buffer = Vec::new();
-
-    println!("Lecture du certificat et de la clé privée");
+    let mut cert_buffer = Vec::new();
     match cert_file.read_to_end(&mut cert_buffer) {
         Ok(_) => println!("Certificat lu avec succès"),
         Err(e) => eprintln!("Erreur lors de la lecture du certificat : {}", e),
@@ -118,60 +111,64 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(e) => eprintln!("Erreur lors de la lecture de la clé privée : {}", e),
     }
 
-    // Créer un accepteur TLS
-    println!("Création de l'accepteur TLS");
+    println!("Configuring TLS acceptor with certificate and private key");
     let acceptor = {
         let identity = Identity::from_pkcs12(&cert_buffer, "")?;
         let builder = native_tls::TlsAcceptor::new(identity)?;
         TlsAcceptor::from(builder)
     };
 
-    println!("Démarrage du serveur");
-    // Créer un écouteur TCP
+    println!("Starting server...");
     let addr = env::args().nth(2).unwrap();
     let listener = TcpListener::bind(&addr).await?;
-    println!("Serveur démarré et en écoute sur {}...", addr);
+    println!("Server started on {}", addr);
 
-    println!("En attente de connexions entrantes");
+    println!("Listening for incoming connections");
     loop {
-        // Accepter les connexions entrantes
         let (socket, _) = listener.accept().await?;
         let acceptor = acceptor.clone();
 
-        // Gérer chaque connexion dans un thread séparé
-        // tokio::spawn(async move {
-        if let Err(e) = handle_connection(socket, acceptor).await {
-            eprintln!("Erreur lors de la gestion de la connexion : {}", e);
-        }
-        // });
+        tokio::spawn(async move {
+            if let Err(e) = handle_connection(socket, acceptor).await {
+                eprintln!("Error handling connection: {}", e);
+            }
+        });
     }
 }
 
-async fn handle_connection(socket: TcpStream, acceptor: TlsAcceptor) -> Result<(), io::Error> {
-    println!("Connexion entrante reçue");
-    // Accepter la connexion TLS
-    let mut tls_stream = acceptor.accept(socket).await.ok().unwrap();
+async fn handle_connection(socket: TcpStream, acceptor: TlsAcceptor) -> anyhow::Result<()> {
+    println!("Accepting TLS connection...");
+    let tls_stream = acceptor.accept(socket).await.ok().unwrap();
 
-    // Lire les données TLS
-    println!("Lecture des données TLS");
-    // let mut buffer = [0; 512];
-    // let resp = tls_stream.read(&mut buffer).await?;
-    // // println!("Données reçues : {:?}", &buffer[..resp]);
-    // println!("Données reçues : {}", String::from_utf8_lossy(&buffer[..resp]));
+    println!("TLS connection accepted");
 
     let stream = tokio::io::BufStream::new(tls_stream);
     let mut cmd_manager = CommandManager::new(stream);
-    match cmd_manager.receive::<RegisterCommand>().await {
+
+    println!("Waiting for command...");
+    match cmd_manager.receive::<UserCommand>().await {
         Ok(cmd) => {
-            println!("Réponse du serveur : {:?}", cmd);
+            println!("Commande reçue : {:?}", cmd);
+            match cmd {
+                UserCommand::Register(RegisterCommand { login, password }) => {
+                    println!(
+                        "Enregistrement de l'utilisateur {} avec le mot de passe {}",
+                        login,
+                        password
+                    );
+                    cmd_manager.send(
+                        &ServerCommand::RegisterResponse(RegisterResponseCommand {
+                            email_sent: true,
+                        })
+                    ).await?;
+                }
+            }
+
+            Ok(())
         }
         Err(e) => {
-            eprintln!("Erreur lors de la réception de la réponse du serveur : {}", e);
-            std::process::exit(1);
+            eprintln!();
+            Err(anyhow::anyhow!("Error receiving command: {}", e))
         }
     }
-    // Manipuler les données TLS
-    // Ici vous pouvez gérer les données chiffrées reçues sur le flux TLS
-
-    Ok(())
 }

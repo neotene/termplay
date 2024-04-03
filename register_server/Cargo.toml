@@ -13,3 +13,4 @@ tokio = { version = "1.37.0", features = ["full"] }
 tokio-native-tls = "0.3.1"
 tokio-stream = { version = "0.1.14", default-features = false, features = ["io-util"] }
 common = { path = "../common"}
+anyhow = "1.0.81"
