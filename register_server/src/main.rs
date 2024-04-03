@@ -3,18 +3,19 @@ use common::command::{ RegisterCommand, RegisterResponseCommand, ServerCommand, 
 
 use tokio::net::{ TcpListener, TcpStream };
 use tokio_native_tls::{ native_tls, TlsAcceptor };
+use std::collections::HashMap;
 use std::env;
+
 use std::fs::File;
 use std::io::Read;
+use std::str::FromStr;
 
 use native_tls::Identity;
 
 use lettre::{ Message, SmtpTransport, Transport };
 use lettre::transport::smtp::authentication::Credentials;
-use std::error::Error;
 
-// Fonction pour envoyer un e-mail
-fn _send_email(
+fn send_email(
     smtp_server: String,
     smtp_port: u16,
     username: String,
@@ -23,62 +24,54 @@ fn _send_email(
     recipient: String,
     subject: String,
     body: String
-) -> Result<(), Box<dyn Error>> {
-    // Créer les informations d'authentification SMTP
+) -> anyhow::Result<()> {
     let credentials = Credentials::new(username.to_string(), password.to_string());
 
-    // Créer le transport SMTP
     let mailer = SmtpTransport::relay(smtp_server.as_str())?
         .credentials(credentials)
         .port(smtp_port)
         .build();
 
-    // Créer le message e-mail
-    let email = Message::builder()
-        .from(sender.parse()?)
-        .to(recipient.parse()?)
-        .subject(subject)
-        .body(body)?;
-
-    // Envoyer l'e-mail
-    mailer.send(&email)?;
+    match
+        Message::builder().from(sender.parse()?).to(recipient.parse()?).subject(subject).body(body)
+    {
+        Ok(email) => {
+            match mailer.send(&email) {
+                Ok(_) => println!("Email sent successfully"),
+                Err(e) => {
+                    eprintln!("Error sending email: {}", e);
+                    return Err(anyhow::anyhow!("Error sending email: {}", e));
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Error building email: {}", e);
+            return Err(anyhow::anyhow!("Error building email: {}", e));
+        }
+    }
 
     Ok(())
 }
 
-fn _send_email_configured(
-    conf_path: &str,
-    sender: String,
-    recipient: String,
-    subject: String,
-    body: String
-) -> Result<(), Box<dyn Error>> {
-    // Load the INI file
-    let conf = ini!(conf_path);
-
-    // Read the SMTP server configuration from the INI file
+fn send_email_configured(
+    conf: HashMap<String, HashMap<String, Option<String>>>,
+    recipient: String
+) -> anyhow::Result<()> {
     let smtp_server = conf["smtp"]["server"].clone().unwrap();
     let smtp_port = conf["smtp"]["port"].clone().unwrap().parse::<u16>()?;
-    let username = conf["smtp"]["username"].clone().unwrap();
+    let username = conf["smtp"]["login"].clone().unwrap();
     let password = conf["smtp"]["password"].clone().unwrap();
 
-    // Create the email message
-    let email = Message::builder()
-        .from(sender.parse()?)
-        .to(recipient.parse()?)
-        .subject(subject)
-        .body(body)?;
-
-    // Create the SMTP transport with the configured server and credentials
-    let mailer = SmtpTransport::relay(smtp_server.as_str())?
-        .credentials(Credentials::new(username, password))
-        .port(smtp_port)
-        .build();
-
-    // Send the email
-    mailer.send(&email)?;
-
-    Ok(())
+    send_email(
+        smtp_server,
+        smtp_port,
+        username,
+        password,
+        String::from_str("termplay.xyz").unwrap(),
+        recipient,
+        String::from_str("Confirm your email").unwrap(),
+        String::from_str("Please confirm your email address by clicking on the link below").unwrap()
+    )
 }
 
 #[macro_use]
@@ -128,15 +121,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (socket, _) = listener.accept().await?;
         let acceptor = acceptor.clone();
 
+        let conf = conf.clone();
         tokio::spawn(async move {
-            if let Err(e) = handle_connection(socket, acceptor).await {
+            if let Err(e) = handle_connection(conf, socket, acceptor).await {
                 eprintln!("Error handling connection: {}", e);
             }
         });
     }
 }
 
-async fn handle_connection(socket: TcpStream, acceptor: TlsAcceptor) -> anyhow::Result<()> {
+async fn handle_connection(
+    conf: HashMap<String, HashMap<String, Option<String>>>,
+    socket: TcpStream,
+    acceptor: TlsAcceptor
+) -> anyhow::Result<()> {
     println!("Accepting TLS connection...");
     let tls_stream = acceptor.accept(socket).await.ok().unwrap();
 
@@ -156,6 +154,10 @@ async fn handle_connection(socket: TcpStream, acceptor: TlsAcceptor) -> anyhow::
                         login,
                         password
                     );
+                    match send_email_configured(conf, login) {
+                        Ok(_) => println!("Email envoyé avec succès"),
+                        Err(e) => eprintln!("Erreur lors de l'envoi de l'email : {}", e),
+                    }
                     cmd_manager.send(
                         &ServerCommand::RegisterResponse(RegisterResponseCommand {
                             email_sent: true,
