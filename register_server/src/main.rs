@@ -39,13 +39,11 @@ fn send_email(
             match mailer.send(&email) {
                 Ok(_) => println!("Email sent successfully"),
                 Err(e) => {
-                    eprintln!("Error sending email: {}", e);
                     return Err(anyhow::anyhow!("Error sending email: {}", e));
                 }
             }
         }
         Err(e) => {
-            eprintln!("Error building email: {}", e);
             return Err(anyhow::anyhow!("Error building email: {}", e));
         }
     }
@@ -67,7 +65,7 @@ fn send_email_configured(
         smtp_port,
         username,
         password,
-        String::from_str("termplay.xyz").unwrap(),
+        String::from_str("register@termplay.xyz").unwrap(),
         recipient,
         String::from_str("Confirm your email").unwrap(),
         String::from_str("Please confirm your email address by clicking on the link below").unwrap()
