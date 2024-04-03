@@ -1,3 +1,5 @@
+use common::client::CommandManager;
+use common::command::RegisterCommand;
 use ini::configparser::ini::Ini;
 use tokio::io::AsyncReadExt;
 use tokio::net::{ TcpListener, TcpStream };
@@ -152,11 +154,22 @@ async fn handle_connection(socket: TcpStream, acceptor: TlsAcceptor) -> Result<(
 
     // Lire les données TLS
     println!("Lecture des données TLS");
-    let mut buffer = [0; 512];
-    let resp = tls_stream.read(&mut buffer).await?;
-    // println!("Données reçues : {:?}", &buffer[..resp]);
-    println!("Données reçues : {}", String::from_utf8_lossy(&buffer[..resp]));
+    // let mut buffer = [0; 512];
+    // let resp = tls_stream.read(&mut buffer).await?;
+    // // println!("Données reçues : {:?}", &buffer[..resp]);
+    // println!("Données reçues : {}", String::from_utf8_lossy(&buffer[..resp]));
 
+    let stream = tokio::io::BufStream::new(tls_stream);
+    let mut cmd_manager = CommandManager::new(stream);
+    match cmd_manager.receive::<RegisterCommand>().await {
+        Ok(cmd) => {
+            println!("Réponse du serveur : {:?}", cmd);
+        }
+        Err(e) => {
+            eprintln!("Erreur lors de la réception de la réponse du serveur : {}", e);
+            std::process::exit(1);
+        }
+    }
     // Manipuler les données TLS
     // Ici vous pouvez gérer les données chiffrées reçues sur le flux TLS
 
