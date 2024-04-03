@@ -128,7 +128,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Créer un écouteur TCP
     let addr = env::args().nth(2).unwrap();
     let listener = TcpListener::bind(&addr).await?;
-    println!("Serveur démarré et en écoute sur le port 8080...");
+    println!("Serveur démarré et en écoute sur {}...", addr);
 
     println!("En attente de connexions entrantes");
     loop {
@@ -152,9 +152,10 @@ async fn handle_connection(socket: TcpStream, acceptor: TlsAcceptor) -> Result<(
 
     // Lire les données TLS
     println!("Lecture des données TLS");
-    let mut buffer = [0; 1024];
+    let mut buffer = [0; 512];
     let resp = tls_stream.read(&mut buffer).await?;
-    println!("Données reçues : {:?}", &buffer[..resp]);
+    // println!("Données reçues : {:?}", &buffer[..resp]);
+    println!("Données reçues : {}", String::from_utf8_lossy(&buffer[..resp]));
 
     // Manipuler les données TLS
     // Ici vous pouvez gérer les données chiffrées reçues sur le flux TLS

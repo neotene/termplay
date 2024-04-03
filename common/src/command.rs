@@ -11,3 +11,14 @@ pub struct RegisterCommand {
 pub enum UserCommand {
     Register(RegisterCommand),
 }
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RegisterResponseCommand {
+    pub email_sent: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "_st", rename_all = "snake_case")]
+pub enum ServerCommand {
+    RegisterResponse(RegisterResponseCommand),
+}

@@ -3,5 +3,6 @@ resolver = "2"
 members = [
   "client_term",
   "client_cli",
-  "register_server"
+  "register_server",
+  "common"
 ]
