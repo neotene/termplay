@@ -1,7 +1,10 @@
-[SMTP]
-server = 
-login = 
-password = 
+[mailgun]
+domain = 
+key = 
+sender = 
+sender name = 
+subject = 
+body = 
 
 [SSL]
 key file path = 

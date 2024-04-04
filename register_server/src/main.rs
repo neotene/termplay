@@ -1,3 +1,4 @@
+use anyhow::Ok;
 use common::server::CommandManager;
 use common::command::{ RegisterCommand, RegisterResponseCommand, ServerCommand, UserCommand };
 
@@ -8,74 +9,59 @@ use std::env;
 
 use std::fs::File;
 use std::io::Read;
-use std::str::FromStr;
 
 use native_tls::Identity;
+extern crate mailgun_rs;
 
-use lettre::{ Message, SmtpTransport, Transport };
-use lettre::transport::smtp::authentication::Credentials;
+use mailgun_rs::{ EmailAddress, Mailgun, MailgunRegion, Message };
 
-fn send_email(
-    smtp_server: String,
-    smtp_port: u16,
-    username: String,
-    password: String,
+async fn send_email(
+    domain: String,
+    key: String,
     sender: String,
+    sender_name: String,
     recipient: String,
     subject: String,
     body: String
 ) -> anyhow::Result<()> {
-    let credentials = Credentials::new(username.to_string(), password.to_string());
+    let recipient = EmailAddress::address(recipient.as_str());
+    let message = Message {
+        to: vec![recipient],
+        subject: String::from(subject),
+        html: String::from(body),
+        ..Default::default()
+    };
 
-    let mailer = SmtpTransport::relay(smtp_server.as_str())?
-        .credentials(credentials)
-        .port(smtp_port)
-        .build();
+    let client = Mailgun {
+        api_key: String::from(key),
+        domain: String::from(domain),
+        message,
+    };
+    let sender = EmailAddress::name_address(sender_name.as_str(), sender.as_str());
 
-    match
-        Message::builder().from(sender.parse()?).to(recipient.parse()?).subject(subject).body(body)
-    {
-        Ok(email) => {
-            match mailer.send(&email) {
-                Ok(_) => println!("Email sent successfully"),
-                Err(e) => {
-                    return Err(anyhow::anyhow!("Error sending email: {}", e));
-                }
-            }
-        }
-        Err(e) => {
-            return Err(anyhow::anyhow!("Error building email: {}", e));
-        }
-    }
-
+    client.async_send(MailgunRegion::EU, &sender).await?;
     Ok(())
 }
 
-fn send_email_configured(
+async fn send_email_configured(
     conf: HashMap<String, HashMap<String, Option<String>>>,
     recipient: String
 ) -> anyhow::Result<()> {
-    let smtp_server = conf["smtp"]["server"].clone().unwrap();
-    let smtp_port = conf["smtp"]["port"].clone().unwrap().parse::<u16>()?;
-    let username = conf["smtp"]["login"].clone().unwrap();
-    let password = conf["smtp"]["password"].clone().unwrap();
+    let domain = conf["mailgun"]["domain"].clone().unwrap();
+    let key = conf["mailgun"]["api key"].clone().unwrap();
+    let sender = conf["mailgun"]["sender"].clone().unwrap();
+    let sender_name = conf["mailgun"]["sender name"].clone().unwrap();
+    let subject = conf["mailgun"]["subject"].clone().unwrap();
+    let body = conf["mailgun"]["body"].clone().unwrap();
 
-    send_email(
-        smtp_server,
-        smtp_port,
-        username,
-        password,
-        String::from_str("register@termplay.xyz").unwrap(),
-        recipient,
-        String::from_str("Confirm your email").unwrap(),
-        String::from_str("Please confirm your email address by clicking on the link below").unwrap()
-    )
+    send_email(domain, key, sender, sender_name, recipient, subject, body).await?;
+    Ok(())
 }
 
 #[macro_use]
 extern crate ini;
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> anyhow::Result<()> {
     if env::args().len() < 3 {
         eprintln!("Usage: {} <config file path> <bind host>", env::args().next().unwrap());
         std::process::exit(1);
@@ -120,11 +106,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let acceptor = acceptor.clone();
 
         let conf = conf.clone();
-        tokio::spawn(async move {
-            if let Err(e) = handle_connection(conf, socket, acceptor).await {
-                eprintln!("Error handling connection: {}", e);
-            }
-        });
+        // tokio::spawn(async move {
+        if let Err(e) = handle_connection(conf, socket, acceptor).await {
+            eprintln!("Error handling connection: {}", e);
+        }
+        // });
     }
 }
 
@@ -153,8 +139,12 @@ async fn handle_connection(
                         password
                     );
                     match send_email_configured(conf, login) {
-                        Ok(_) => println!("Email envoyé avec succès"),
-                        Err(e) => eprintln!("Erreur lors de l'envoi de l'email : {}", e),
+                        Ok(_) => {
+                            println!("Email envoyé avec succès");
+                        }
+                        Err(e) => {
+                            eprintln!("Erreur lors de l'envoi de l'email : {}", e);
+                        }
                     }
                     cmd_manager.send(
                         &ServerCommand::RegisterResponse(RegisterResponseCommand {
