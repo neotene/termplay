@@ -1,6 +1,6 @@
 [mailgun]
 domain = 
-key = 
+api key = 
 sender = 
 sender name = 
 subject = 

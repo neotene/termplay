@@ -1,4 +1,4 @@
-use anyhow::Ok;
+use core::result::Result::Ok;
 use common::server::CommandManager;
 use common::command::{ RegisterCommand, RegisterResponseCommand, ServerCommand, UserCommand };
 
@@ -54,6 +54,7 @@ async fn send_email_configured(
     let subject = conf["mailgun"]["subject"].clone().unwrap();
     let body = conf["mailgun"]["body"].clone().unwrap();
 
+    print!("Envoi de l'email à {}...", recipient);
     send_email(domain, key, sender, sender_name, recipient, subject, body).await?;
     Ok(())
 }
@@ -79,14 +80,8 @@ async fn main() -> anyhow::Result<()> {
 
     let mut key_buffer = Vec::new();
     let mut cert_buffer = Vec::new();
-    match cert_file.read_to_end(&mut cert_buffer) {
-        Ok(_) => println!("Certificat lu avec succès"),
-        Err(e) => eprintln!("Erreur lors de la lecture du certificat : {}", e),
-    }
-    match key_file.read_to_end(&mut key_buffer) {
-        Ok(_) => println!("Clé privée lue avec succès"),
-        Err(e) => eprintln!("Erreur lors de la lecture de la clé privée : {}", e),
-    }
+    cert_file.read_to_end(&mut cert_buffer)?;
+    key_file.read_to_end(&mut key_buffer)?;
 
     println!("Configuring TLS acceptor with certificate and private key");
     let acceptor = {
@@ -105,9 +100,9 @@ async fn main() -> anyhow::Result<()> {
         let (socket, _) = listener.accept().await?;
         let acceptor = acceptor.clone();
 
-        let conf = conf.clone();
+        let conf_cloned = conf.clone();
         // tokio::spawn(async move {
-        if let Err(e) = handle_connection(conf, socket, acceptor).await {
+        if let Err(e) = handle_connection(conf_cloned, socket, acceptor).await {
             eprintln!("Error handling connection: {}", e);
         }
         // });
@@ -129,36 +124,43 @@ async fn handle_connection(
 
     println!("Waiting for command...");
     match cmd_manager.receive::<UserCommand>().await {
-        Ok(cmd) => {
-            println!("Commande reçue : {:?}", cmd);
-            match cmd {
-                UserCommand::Register(RegisterCommand { login, password }) => {
-                    println!(
-                        "Enregistrement de l'utilisateur {} avec le mot de passe {}",
-                        login,
-                        password
-                    );
-                    match send_email_configured(conf, login) {
-                        Ok(_) => {
-                            println!("Email envoyé avec succès");
-                        }
-                        Err(e) => {
-                            eprintln!("Erreur lors de l'envoi de l'email : {}", e);
-                        }
-                    }
-                    cmd_manager.send(
-                        &ServerCommand::RegisterResponse(RegisterResponseCommand {
-                            email_sent: true,
-                        })
-                    ).await?;
+        Ok(UserCommand::Register(RegisterCommand { login, password })) => {
+            println!("Registering user {} with password {}", login, password);
+            match send_email_configured(conf, login).await {
+                Ok(_res) => {
+                    println!("Email sent successfully");
+                }
+                Err(e) => {
+                    eprintln!("Error sending email: {}", e);
                 }
             }
-
-            Ok(())
+            cmd_manager.send(
+                &ServerCommand::RegisterResponse(RegisterResponseCommand {
+                    email_sent: true,
+                })
+            ).await?;
         }
-        Err(e) => {
-            eprintln!();
-            Err(anyhow::anyhow!("Error receiving command: {}", e))
+        _ => {
+            println!("Unknown command received");
         }
     }
+    Ok(())
 }
+
+// Ok(UserCommand::Register(RegisterCommand { login, password })) => {
+//     println!(
+//         "Enregistrement de l'utilisateur {} avec le mot de passe {}",
+//         login,
+//         password
+//     );
+//     match send_email_configured(conf, login).await {
+//         _res => {
+//             println!("Email envoyé avec succès");
+//         }
+//     }
+//     cmd_manager.send(
+//         &ServerCommand::RegisterResponse(RegisterResponseCommand {
+//             email_sent: true,
+//         })
+//     ).await?;
+// }
