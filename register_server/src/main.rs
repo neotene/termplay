@@ -153,8 +153,30 @@ async fn register(
     login: String,
     password: String
 ) -> anyhow::Result<()> {
-    let db_path = conf["database"]["path"].clone().unwrap();
-    let conn = Connection::open(db_path)?;
+    let conn: Connection;
+
+    match conf.get("database") {
+        Some(db_conf) => {
+            match db_conf.get("path") {
+                Some(path) => {
+                    match path {
+                        Some(path) => {
+                            conn = Connection::open(path)?;
+                        }
+                        None => {
+                            return Err("Database path not found in configuration");
+                        }
+                    }
+                }
+                None => {
+                    ((), "Database path not found in configuration");
+                }
+            }
+        }
+        None => {
+            ((), "Database configuration not found in configuration");
+        }
+    }
 
     // Create the pre_register table if it doesn't exist
     match
