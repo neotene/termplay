@@ -6,12 +6,15 @@ use mailgun_rs::{ EmailAddress, Mailgun, MailgunRegion, Message };
 use tokio::net::{ TcpListener, TcpStream };
 use tokio_native_tls::{ native_tls, TlsAcceptor };
 use std::collections::HashMap;
-use std::env;
+use std::{ any, env };
 
 use std::fs::File;
 use std::io::Read;
 
 use native_tls::Identity;
+use rusqlite::{ Connection, Result };
+use uuid::Uuid;
+use bcrypt::{ hash, hash_with_salt, DEFAULT_COST };
 
 async fn send_email(
     domain: String,
@@ -124,7 +127,7 @@ async fn handle_connection(
     match cmd_manager.receive::<UserCommand>().await {
         Ok(UserCommand::Register(RegisterCommand { login, password })) => {
             println!("Registering user {} with password {}", login, password);
-            match send_email_configured(conf, login).await {
+            match register(conf, login, password).await {
                 Ok(_res) => {
                     println!("Email sent successfully");
                 }
@@ -142,6 +145,56 @@ async fn handle_connection(
             println!("Unknown command received");
         }
     }
+    Ok(())
+}
+
+async fn register(
+    conf: HashMap<String, HashMap<String, Option<String>>>,
+    login: String,
+    password: String
+) -> anyhow::Result<()> {
+    let db_path = conf["database"]["path"].clone().unwrap();
+    let conn = Connection::open(db_path)?;
+
+    // Create the pre_register table if it doesn't exist
+    match
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS pre_register (id TEXT PRIMARY KEY, login TEXT, password TEXT)",
+            []
+        )
+    {
+        Ok(_) => {
+            println!("Table pre_register created successfully");
+        }
+        Err(e) => {
+            eprintln!("Error creating table pre_register: {}", e);
+            Err(e)?;
+        }
+    }
+
+    // Generate a UUID for the registration
+    let id = Uuid::new_v4().to_string();
+
+    // Generate a salt for the password
+    let salt = Uuid::new_v4().to_bytes_le();
+
+    // Hash the password with a salt
+    match hash_with_salt(password, DEFAULT_COST, salt) {
+        Ok(hashed_password) => {
+            println!("Hashed password: {}", hashed_password.to_string());
+            // Insert the registration data into the pre_register table
+            conn.execute("INSERT INTO pre_register (id, login, password) VALUES (?1, ?2, ?3)", [
+                id,
+                login,
+                hashed_password.to_string(),
+            ])?;
+        }
+        Err(e) => {
+            eprintln!("Error hashing password: {}", e);
+            Err(e)?;
+        }
+    }
+
     Ok(())
 }
 
