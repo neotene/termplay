@@ -2,6 +2,7 @@ use core::result::Result::Ok;
 use common::server::CommandManager;
 use common::command::{ RegisterCommand, RegisterResponseCommand, ServerCommand, UserCommand };
 
+use mailgun_rs::{ EmailAddress, Mailgun, MailgunRegion, Message };
 use tokio::net::{ TcpListener, TcpStream };
 use tokio_native_tls::{ native_tls, TlsAcceptor };
 use std::collections::HashMap;
@@ -11,9 +12,6 @@ use std::fs::File;
 use std::io::Read;
 
 use native_tls::Identity;
-extern crate mailgun_rs;
-
-use mailgun_rs::{ EmailAddress, Mailgun, MailgunRegion, Message };
 
 async fn send_email(
     domain: String,
