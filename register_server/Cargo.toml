@@ -17,6 +17,7 @@ mailgun-rs = "0.1.10"
 rusqlite = { version = "0.31.0", features = ["bundled"] }
 bcrypt = "0.15.1"
 random-string = "1.1.0"
+rocket = { version = "0.5.0", features = ["json", "tls", "serde_json"] }
 
 [dependencies.uuid]
 version = "1.8.0"

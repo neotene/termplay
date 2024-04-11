@@ -9,3 +9,6 @@ body =
 [SSL]
 key file path = 
 cert file path = 
+
+[database]
+path = ./db.sqlite3

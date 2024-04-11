@@ -12,7 +12,7 @@ use std::fs::File;
 use std::io::Read;
 
 use native_tls::Identity;
-use rusqlite::{ Connection, Result };
+use rusqlite::{ Connection, Result, ToSql };
 use uuid::Uuid;
 use bcrypt::{ hash, hash_with_salt, DEFAULT_COST };
 
@@ -153,35 +153,11 @@ async fn register(
     login: String,
     password: String
 ) -> anyhow::Result<()> {
-    let conn: Connection;
-
-    match conf.get("database") {
-        Some(db_conf) => {
-            match db_conf.get("path") {
-                Some(path) => {
-                    match path {
-                        Some(path) => {
-                            conn = Connection::open(path)?;
-                        }
-                        None => {
-                            return Err("Database path not found in configuration");
-                        }
-                    }
-                }
-                None => {
-                    ((), "Database path not found in configuration");
-                }
-            }
-        }
-        None => {
-            ((), "Database configuration not found in configuration");
-        }
-    }
-
+    let conn = create_get_db_connection(conf)?;
     // Create the pre_register table if it doesn't exist
     match
         conn.execute(
-            "CREATE TABLE IF NOT EXISTS pre_register (id TEXT PRIMARY KEY, login TEXT, password TEXT)",
+            "CREATE TABLE IF NOT EXISTS pre_register (id TEXT PRIMARY KEY, login TEXT, password TEXT, salt TEXT)",
             []
         )
     {
@@ -199,17 +175,28 @@ async fn register(
 
     // Generate a salt for the password
     let salt = Uuid::new_v4().to_bytes_le();
+    match salt.to_sql()? {
+        rusqlite::types::ToSqlOutput::Borrowed(_bytes) => {
+            println!("Salt: {:?}", salt);
+        }
+        rusqlite::types::ToSqlOutput::Owned(_bytes) => {
+            println!("Salt: {:?}", salt);
+        }
+        _ => {
+            eprintln!("Error converting salt to SQL");
+            Err(anyhow::Error::msg("Error converting salt to SQL"))?;
+        }
+    }
 
     // Hash the password with a salt
     match hash_with_salt(password, DEFAULT_COST, salt) {
         Ok(hashed_password) => {
             println!("Hashed password: {}", hashed_password.to_string());
             // Insert the registration data into the pre_register table
-            conn.execute("INSERT INTO pre_register (id, login, password) VALUES (?1, ?2, ?3)", [
-                id,
-                login,
-                hashed_password.to_string(),
-            ])?;
+            conn.execute(
+                "INSERT INTO pre_register (id, login, password, salt) VALUES (?1, ?2, ?3, ?4)",
+                [id, login, hashed_password.to_string()]
+            )?;
         }
         Err(e) => {
             eprintln!("Error hashing password: {}", e);
@@ -218,6 +205,31 @@ async fn register(
     }
 
     Ok(())
+}
+
+fn create_get_db_connection(
+    conf: HashMap<String, HashMap<String, Option<String>>>
+) -> anyhow::Result<Connection> {
+    match conf.get("database") {
+        Some(db_conf) => {
+            match db_conf.get("path") {
+                Some(path) => {
+                    match path {
+                        Some(path) => { Ok(Connection::open(path)?) }
+                        None => {
+                            anyhow::bail!("Database path not found in configuration");
+                        }
+                    }
+                }
+                None => {
+                    anyhow::bail!("Database path not found in configuration");
+                }
+            }
+        }
+        None => {
+            anyhow::bail!("Database configuration not found");
+        }
+    }
 }
 
 // Ok(UserCommand::Register(RegisterCommand { login, password })) => {
