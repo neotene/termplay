@@ -11,17 +11,17 @@ pub enum ConnectionStatus {
 
 #[derive(Default, Clone)]
 pub struct State {
-    pub is_logged: bool,
+    // pub is_logged: bool,
     pub is_registering: bool,
-    pub login: String,
-    pub password: String,
-    pub register_login: String,
-    pub register_confirm_login: String,
-    pub register_password: String,
-    pub register_confirm_password: String,
+    // pub login: String,
+    // pub password: String,
+    // pub register_login: String,
+    // pub register_confirm_login: String,
+    // pub register_password: String,
+    // pub register_confirm_password: String,
     pub error_message: String,
     pub show_exit_confirmation: bool,
-    pub connection_status: ConnectionStatus,
+    // pub connection_status: ConnectionStatus,
 }
 
 // impl State {

@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate rocket;
 
-use rocket::http::{ Cookie, CookieJar, SameSite, Status };
+use rocket::http::{Cookie, CookieJar, SameSite, Status};
 use rocket::response::status;
 use std::collections::HashMap;
 
@@ -57,14 +57,14 @@ impl UserDatabase {
 fn confirm_account(
     uuid: String,
     cookies: &CookieJar<'_>,
-    user_db: &rocket::State<UserDatabase>
+    user_db: &rocket::State<UserDatabase>,
 ) -> status::Custom<String> {
     match user_db.confirm_account(&uuid) {
         Ok(()) => {
             cookies.add(Cookie::new("user_id", uuid.clone()).same_site());
             status::Custom(
                 Status::Ok,
-                format!("Compte confirmé avec succès pour l'UUID : {}", uuid)
+                format!("Compte confirmé avec succès pour l'UUID : {}", uuid),
             )
         }
         Err(_) => status::Custom(Status::NotFound, "UUID invalide".to_string()),
@@ -74,5 +74,7 @@ fn confirm_account(
 #[launch]
 fn rocket() -> _ {
     let user_db = UserDatabase::new();
-    rocket::build().mount("/", routes![confirm_account]).manage(user_db)
+    rocket::build()
+        .mount("/", routes![confirm_account])
+        .manage(user_db)
 }
