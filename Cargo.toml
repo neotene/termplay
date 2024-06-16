@@ -4,6 +4,5 @@ members = [
   "client_term",
   "client_cli",
   "register_server",
-  //"confirmation_server",
   "common"
 ]

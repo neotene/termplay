@@ -2084,16 +2084,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "termplay-confirmation-server"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "common",
- "ini",
- "rocket",
-]
-
-[[package]]
 name = "termplay-register-server"
 version = "0.1.0"
 dependencies = [
